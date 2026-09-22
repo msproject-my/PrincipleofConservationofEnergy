@@ -1,8 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Simulator - Principle of Conservation of Energy</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,6 +15,7 @@
             -moz-user-select: none !important;
             user-select: none !important;
             -webkit-touch-callout: none !important;
+            box-sizing: border-box;
         }
         input[type=range] {
             accent-color: #0d9488;
@@ -21,58 +23,80 @@
         .energy-bar-fill {
             transition: width 0.05s linear;
         }
-        /* Rapatkan p, k, dan Total ke huruf E */
         sub {
-            font-size: 0.72em;
+            font-size: 0.75em;
             line-height: 0;
             position: relative;
             vertical-align: baseline;
-            bottom: -0.22em;
-            margin-left: -0.16em;
-            letter-spacing: -0.02em;
+            bottom: -0.2em;
+        }
+        .touch-draggable {
+            touch-action: none;
+        }
+        /* Mobile Simulator Mode Container */
+        .mode-mobile-container {
+            max-width: 480px !important;
+            margin-left: auto;
+            margin-right: auto;
         }
     </style>
 </head>
-<body class="bg-emerald-50/60 text-slate-800 h-screen flex flex-col justify-between p-2.5 sm:p-3 overflow-hidden select-none" oncontextmenu="return false;">
+<body id="appBody" class="bg-emerald-50/60 text-slate-800 min-h-screen min-h-[100dvh] h-screen h-[100dvh] flex flex-col justify-between p-1.5 sm:p-2.5 overflow-hidden select-none" oncontextmenu="return false;">
 
-    <!-- Minimal Header -->
-    <header class="w-full max-w-6xl mx-auto flex items-center justify-between bg-white/90 backdrop-blur border border-emerald-200/80 rounded-xl px-4 py-2 shadow-xs shrink-0">
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+    <!-- Responsive Header with Mode Switcher & Model Switcher -->
+    <header class="w-full max-w-7xl mx-auto flex flex-wrap items-center justify-between bg-white/95 backdrop-blur border border-emerald-200/80 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-xs shrink-0 gap-2 mb-1">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs shrink-0">
                 ⚡
             </div>
             <div>
-                <h1 class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
+                <h1 class="text-xs sm:text-base font-extrabold text-slate-900 leading-tight">
                     Conservation of Energy
                 </h1>
-                <p id="subTitle" class="text-[11px] text-slate-500 font-medium">Model 1: Free-Falling Coconut</p>
+                <p id="subTitle" class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium">Model 1: Free-Falling Coconut</p>
             </div>
         </div>
 
-        <!-- Clean Segmented Model Switcher -->
-        <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold">
-            <button id="tab1" onclick="switchSimulator(1)" class="px-3 py-1 rounded-md bg-teal-700 text-white shadow-xs transition">
-                1. Free Fall
-            </button>
-            <button id="tab2" onclick="switchSimulator(2)" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-                2. Pendulum
-            </button>
-            <button id="tab3" onclick="switchSimulator(3)" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">
-                3. Roller Coaster
-            </button>
+        <!-- Center Controls: Model Tabs & View Mode (PC / Mobile) Switcher -->
+        <div class="flex items-center gap-2 flex-wrap">
+            <!-- Model Switcher -->
+            <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs font-semibold shrink-0">
+                <button id="tab1" onclick="switchSimulator(1)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-center">
+                    1. Free Fall
+                </button>
+                <button id="tab2" onclick="switchSimulator(2)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center">
+                    2. Pendulum
+                </button>
+                <button id="tab3" onclick="switchSimulator(3)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center">
+                    3. Coaster
+                </button>
+            </div>
+
+            <!-- View Layout Switcher (PC View vs Mobile View) -->
+            <div class="flex bg-teal-50/80 p-0.5 rounded-lg border border-teal-200 text-[10px] sm:text-xs font-bold shrink-0">
+                <button id="btnViewPC" onclick="setViewMode('pc')" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold">
+                    <span>💻</span>
+                    <span class="hidden sm:inline">PC View</span>
+                </button>
+                <button id="btnViewMobile" onclick="setViewMode('mobile')" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold">
+                    <span>📱</span>
+                    <span class="hidden sm:inline">Mobile View</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <main class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0 my-2">
+    <!-- Main Workspace (Adapts dynamically between PC View and Mobile View) -->
+    <main id="mainWorkspace" class="w-full max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-12 gap-2 flex-1 min-h-0 overflow-hidden mb-1">
         
-        <!-- Left: Simulation Canvas -->
-        <div class="lg:col-span-7 bg-white/95 rounded-xl border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden">
+        <!-- Left Column: Simulation Canvas -->
+        <div id="simCanvasCol" class="flex-[1.5] lg:flex-none lg:col-span-7 bg-white/95 rounded-lg sm:rounded-xl border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-[340px] sm:min-h-[400px]">
+            
             <!-- Stage Header & State Indicator -->
-            <div class="px-3.5 py-1.5 border-b border-slate-100 flex items-center justify-between text-xs shrink-0 bg-slate-50/50">
-                <div class="flex items-center gap-2">
+            <div class="px-2.5 sm:px-3.5 py-1.5 border-b border-slate-100 flex items-center justify-between text-[10px] sm:text-xs shrink-0 bg-slate-50/70">
+                <div class="flex items-center gap-1.5 sm:gap-2">
                     <span id="statusDot" class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                    <span id="statusText" class="font-bold text-teal-800 uppercase tracking-wide text-[11px]">Ready</span>
+                    <span id="statusText" class="font-bold text-teal-800 uppercase tracking-wide text-[9px] sm:text-[11px]">Ready</span>
                 </div>
                 <!-- Dynamic Jump Points -->
                 <div id="quickJumps" class="flex items-center gap-1">
@@ -81,93 +105,170 @@
             </div>
 
             <!-- Interactive Stage Area -->
-            <div class="relative flex-1 min-h-0 flex items-center justify-center p-2 bg-gradient-to-b from-sky-50/30 to-emerald-50/30 overflow-hidden">
+            <div class="relative flex-1 w-full min-h-[260px] sm:min-h-[320px] flex items-center justify-center p-1 sm:p-2 bg-gradient-to-b from-sky-50/40 via-white to-emerald-50/30 overflow-hidden">
                 
-                <!-- SVG Model 1: Coconut Tree -->
-                <svg id="svgSim1" class="w-full h-full max-h-full" viewBox="0 0 520 750" preserveAspectRatio="xMidYMid meet">
+                <!-- SVG Model 1: Modern Minimalist Stylized Palm Tree -->
+                <svg id="svgSim1" class="w-full h-full max-h-full block" viewBox="0 0 520 750" preserveAspectRatio="xMidYMid meet">
                     <defs>
-                        <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#5a3818"/>
-                            <stop offset="50%" stop-color="#8a5323"/>
-                            <stop offset="100%" stop-color="#4e2c0e"/>
+                        <!-- Sleek Trunk Linear Gradient -->
+                        <linearGradient id="modernTrunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#4d2f20"/>
+                            <stop offset="40%" stop-color="#673e2a"/>
+                            <stop offset="70%" stop-color="#784a33"/>
+                            <stop offset="100%" stop-color="#42271a"/>
                         </linearGradient>
-                        <radialGradient id="coconutGrad" cx="35%" cy="35%" r="65%">
-                            <stop offset="0%" stop-color="#3b2d1d"/>
-                            <stop offset="50%" stop-color="#1e140a"/>
-                            <stop offset="100%" stop-color="#000000"/>
+
+                        <!-- Warm Amber-Golden Coconut Gradient -->
+                        <radialGradient id="amberCoconutGrad" cx="35%" cy="30%" r="65%">
+                            <stop offset="0%" stop-color="#fef08a"/>
+                            <stop offset="30%" stop-color="#f59e0b"/>
+                            <stop offset="75%" stop-color="#d97706"/>
+                            <stop offset="100%" stop-color="#9a3412"/>
                         </radialGradient>
                     </defs>
 
-                    <!-- Ground: Light Brown / Sand Surface at y = 705 -->
+                    <!-- Ground: Light Brown Sand/Soil at y = 705 -->
                     <rect x="0" y="705" width="520" height="45" fill="#d4a373"/>
                     <path d="M 0 705 Q 130 699 260 705 T 520 705 L 520 750 L 0 750 Z" fill="#ba8352"/>
 
-                    <!-- Tree Trunk -->
-                    <path d="M 195 705 C 195 550, 185 360, 202 125 L 217 125 C 200 360, 210 550, 212 705 Z" fill="url(#trunkGrad)"/>
-
-                    <!-- Leaves -->
-                    <g fill="#15803d" stroke="#14532d" stroke-width="1.2">
-                        <path d="M 210 125 Q 120 110, 45 185 Q 130 140, 210 125"/>
-                        <path d="M 210 125 Q 110 70, 70 80 Q 140 95, 210 125" fill="#166534"/>
-                        <path d="M 210 125 Q 155 35, 130 25 Q 175 60, 210 125"/>
-                        <path d="M 210 125 Q 210 15, 220 15 Q 220 55, 210 125" fill="#166534"/>
-                        <path d="M 210 125 Q 275 35, 305 28 Q 260 65, 210 125"/>
-                        <path d="M 210 125 Q 320 70, 370 85 Q 290 100, 210 125" fill="#166534"/>
-                        <path d="M 210 125 Q 330 115, 395 190 Q 300 145, 210 125"/>
-                        <path d="M 210 125 Q 260 165, 290 230 Q 245 165, 210 125" fill="#14532d"/>
-                        <path d="M 210 125 Q 170 160, 140 225 Q 180 160, 210 125" fill="#14532d"/>
+                    <!-- TREE TRUNK -->
+                    <g>
+                        <path d="M 188 705 
+                                 C 202 530, 222 340, 226 135 
+                                 L 235 135 
+                                 C 230 340, 218 530, 226 705 Z" 
+                              fill="url(#modernTrunkGrad)"/>
+                        <path d="M 193 700 C 206 530, 224 340, 228 140" 
+                              stroke="#8d5a3f" 
+                              stroke-width="3" 
+                              stroke-linecap="round" 
+                              fill="none" 
+                              opacity="0.8"/>
                     </g>
 
-                    <!-- Height Indicator (h) with bottom arrow right at ground level 692-705 -->
-                    <line x1="172" y1="130" x2="172" y2="692" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
-                    <polygon points="172,125 168,137 176,137" fill="#dc2626"/>
-                    <polygon points="172,692 168,680 176,680" fill="#dc2626"/>
-                    <rect x="156" y="398" width="32" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
-                    <text x="172" y="415" font-size="15" font-style="italic" font-weight="bold" fill="#dc2626" text-anchor="middle">h</text>
+                    <!-- PALM FRONDS -->
+                    <g stroke-linejoin="round" stroke-linecap="round">
+                        <!-- Frond 1: Top-Left -->
+                        <g>
+                            <path d="M 230 135 C 205 95, 175 60, 142 42 C 160 55, 175 75, 192 100 Z" fill="#1b331c"/>
+                            <path d="M 230 135 C 205 95, 175 60, 142 42 C 162 70, 185 105, 230 135 Z" fill="#365834"/>
+                            <polygon points="175,70 178,63 186,75" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="198,96 202,89 208,101" fill="#ffffff" opacity="0.95"/>
+                        </g>
 
-                    <!-- Trajectory line stopping at ground contact center (y = 692) -->
-                    <line x1="228" y1="125" x2="228" y2="692" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <!-- Frond 2: Top -->
+                        <g>
+                            <path d="M 230 133 C 228 85, 220 50, 202 24 C 215 45, 224 75, 230 133 Z" fill="#1f3d21"/>
+                            <path d="M 230 133 C 228 85, 220 50, 202 24 C 228 48, 238 85, 230 133 Z" fill="#3c653a"/>
+                            <polygon points="212,48 217,42 219,55" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 3: Top-Right -->
+                        <g>
+                            <path d="M 231 134 C 255 90, 290 55, 335 46 C 308 62, 280 88, 255 120 Z" fill="#244526"/>
+                            <path d="M 231 134 C 255 90, 290 55, 335 46 C 315 75, 285 110, 231 134 Z" fill="#447342"/>
+                            <polygon points="295,72 301,64 306,78" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="268,103 273,95 277,109" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 4: Far-Right -->
+                        <g>
+                            <path d="M 232 135 C 275 120, 325 130, 395 160 C 355 165, 310 160, 260 148 Z" fill="#1b331c"/>
+                            <path d="M 232 135 C 275 120, 325 130, 395 160 C 350 178, 295 170, 232 135 Z" fill="#365834"/>
+                            <polygon points="340,154 348,149 350,161" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="295,148 302,142 304,155" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 5: Bottom-Right -->
+                        <g>
+                            <path d="M 231 136 C 265 155, 305 195, 345 255 C 322 230, 295 200, 260 175 Z" fill="#1f3d21"/>
+                            <path d="M 231 136 C 265 155, 305 195, 345 255 C 312 245, 275 215, 231 136 Z" fill="#3c653a"/>
+                            <polygon points="310,215 318,211 316,224" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="275,180 282,175 281,188" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 6: Far-Left -->
+                        <g>
+                            <path d="M 229 135 C 185 110, 130 115, 68 145 C 110 145, 155 142, 200 138 Z" fill="#244526"/>
+                            <path d="M 229 135 C 185 110, 130 115, 68 145 C 112 160, 165 158, 229 135 Z" fill="#447342"/>
+                            <polygon points="120,138 114,132 124,131" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="168,140 162,134 172,133" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 7: Bottom-Left -->
+                        <g>
+                            <path d="M 229 136 C 195 160, 155 200, 102 245 C 130 225, 160 195, 195 170 Z" fill="#1b331c"/>
+                            <path d="M 229 136 C 195 160, 155 200, 102 245 C 135 235, 175 205, 229 136 Z" fill="#365834"/>
+                            <polygon points="142,210 135,205 145,203" fill="#ffffff" opacity="0.95"/>
+                            <polygon points="182,178 175,173 185,171" fill="#ffffff" opacity="0.95"/>
+                        </g>
+
+                        <!-- Frond 8: Lower Center -->
+                        <g>
+                            <path d="M 230 138 C 215 170, 195 205, 172 235 C 188 210, 205 185, 220 160 Z" fill="#244526"/>
+                            <path d="M 230 138 C 215 170, 195 205, 172 235 C 198 220, 218 190, 230 138 Z" fill="#447342"/>
+                            <polygon points="194,198 188,193 197,192" fill="#ffffff" opacity="0.95"/>
+                        </g>
+                    </g>
+
+                    <!-- ATTACHED GOLDEN-AMBER COCONUTS -->
+                    <g>
+                        <circle cx="216" cy="133" r="12" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
+                        <circle cx="213" cy="129" r="3" fill="#ffffff" opacity="0.6"/>
+                        <circle cx="238" cy="132" r="11" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
+                        <circle cx="235" cy="128" r="2.8" fill="#ffffff" opacity="0.6"/>
+                        <circle cx="227" cy="142" r="13.5" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="2"/>
+                        <circle cx="223" cy="138" r="3.5" fill="#ffffff" opacity="0.65"/>
+                    </g>
+
+                    <!-- Height Indicator (h) with bottom arrow right on ground line 705 -->
+                    <line x1="168" y1="130" x2="168" y2="705" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
+                    <polygon points="168,125 164,137 172,137" fill="#dc2626"/>
+                    <polygon points="168,705 164,693 172,693" fill="#dc2626"/>
+                    <rect x="152" y="398" width="32" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
+                    <text x="168" y="415" font-size="15" font-style="italic" font-weight="bold" fill="#dc2626" text-anchor="middle">h</text>
+
+                    <!-- Trajectory line stopping right at ground contact (y = 705) -->
+                    <line x1="228" y1="125" x2="228" y2="705" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
 
                     <!-- Diagram Markers -->
                     <g>
-                        <!-- Top -->
+                        <!-- Top Level (h) -->
                         <line x1="236" y1="125" x2="310" y2="125" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
                         <polygon points="314,125 306,122 306,128" fill="#dc2626"/>
-                        <text x="325" y="120" font-size="13" font-weight="bold" fill="#0f172a">E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan><tspan font-size="13" dy="-2.5" dx="2"> = 0</tspan></text>
-                        <text x="325" y="136" font-size="13" font-weight="bold" fill="#047857">100 % E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan></text>
-                        <text x="470" y="128" font-size="14" font-style="italic" font-weight="bold" fill="#475569">h</text>
+                        <text x="325" y="118" font-size="13" font-weight="bold" fill="#0f172a">Ek = 0</text>
+                        <text x="325" y="136" font-size="13" font-weight="bold" fill="#047857">100 % Ep</text>
+                        <text x="470" y="127" font-size="14" font-style="italic" font-weight="bold" fill="#475569">h</text>
 
-                        <!-- Mid -->
+                        <!-- Mid Level (1/2 h) -->
                         <line x1="236" y1="415" x2="310" y2="415" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
                         <polygon points="314,415 306,412 306,418" fill="#dc2626"/>
-                        <text x="325" y="410" font-size="13" font-weight="bold" fill="#047857">50 % E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan></text>
-                        <text x="325" y="426" font-size="13" font-weight="bold" fill="#2563eb">50 % E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan></text>
-                        <text x="470" y="418" font-size="13" font-weight="bold" fill="#475569">½ of h</text>
+                        <text x="325" y="408" font-size="13" font-weight="bold" fill="#047857">50 % Ep</text>
+                        <text x="325" y="426" font-size="13" font-weight="bold" fill="#2563eb">50 % Ek</text>
+                        <text x="470" y="417" font-size="13" font-weight="bold" fill="#475569">½ of h</text>
 
-                        <!-- Ground (Level y = 692, with coconut bottom perfectly at 705) -->
-                        <line x1="236" y1="692" x2="310" y2="692" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
-                        <polygon points="314,692 306,689 306,695" fill="#dc2626"/>
-                        <text x="325" y="688" font-size="13" font-weight="bold" fill="#2563eb">100 % E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan></text>
-                        <text x="325" y="704" font-size="12" font-weight="bold" fill="#64748b">E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan><tspan font-size="12" dy="-2.5" dx="2"> = 0</tspan></text>
-                        <text x="470" y="696" font-size="13" font-weight="bold" fill="#475569">h = 0</text>
+                        <!-- Ground Level (y = 705) -->
+                        <line x1="236" y1="705" x2="310" y2="705" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
+                        <polygon points="314,705 306,702 306,708" fill="#dc2626"/>
+                        <text x="325" y="694" font-size="13" font-weight="bold" fill="#2563eb">100 % Ek</text>
+                        <text x="325" y="722" font-size="13" font-weight="bold" fill="#475569">Ep = 0</text>
+                        <text x="470" y="708" font-size="13" font-weight="bold" fill="#475569">h = 0</text>
                     </g>
 
-                    <!-- Draggable Coconut Entity (r = 13) -->
-                    <g id="coconutEntity" class="cursor-grab active:cursor-grabbing" transform="translate(228, 125)">
-                        <circle cx="0" cy="0" r="13" fill="url(#coconutGrad)" stroke="#111827" stroke-width="1.5"/>
-                        <ellipse cx="-4" cy="-4" rx="3.5" ry="2" fill="#ffffff" opacity="0.3"/>
-                        <circle cx="0" cy="0" r="30" fill="transparent"/>
+                    <!-- Draggable Amber Coconut Entity -->
+                    <g id="coconutEntity" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(228, 125)">
+                        <circle cx="0" cy="0" r="13" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
+                        <ellipse cx="-4" cy="-4" rx="3.5" ry="2" fill="#ffffff" opacity="0.6"/>
+                        <circle cx="0" cy="0" r="32" fill="transparent"/>
                     </g>
                 </svg>
 
                 <!-- SVG Model 2: Simple Pendulum -->
                 <svg id="svgSim2" class="w-full h-full max-h-full hidden" viewBox="0 0 620 700" preserveAspectRatio="xMidYMid meet">
-                    <!-- Ceiling -->
                     <rect x="70" y="75" width="480" height="14" rx="4" fill="#b4835a"/>
                     <text x="80" y="65" font-size="14" font-weight="bold" fill="#64748b">Rigid support</text>
                     <circle cx="310" cy="85" r="4.5" fill="#334155"/>
 
-                    <!-- Trajectory Arc -->
                     <path id="trajectoryArc" d="" stroke="#15803d" stroke-width="2" stroke-dasharray="5 4" fill="none"/>
 
                     <!-- Ghost C -->
@@ -175,8 +276,8 @@
                         <line id="stringC" x1="310" y1="85" x2="160" y2="475" stroke="#15803d" stroke-width="1.8" stroke-dasharray="4 4"/>
                         <circle id="bobC" cx="160" cy="475" r="26" fill="#93c5fd"/>
                         <text x="90" y="475" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">Point C</text>
-                        <text x="90" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">E<sub>p</sub> = max</text>
-                        <text x="90" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">E<sub>k</sub> = 0</text>
+                        <text x="90" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = max</text>
+                        <text x="90" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ek = 0</text>
                     </g>
 
                     <!-- Ghost B -->
@@ -184,22 +285,22 @@
                         <line id="stringB" x1="310" y1="85" x2="460" y2="475" stroke="#15803d" stroke-width="1.8" stroke-dasharray="4 4"/>
                         <circle id="bobB" cx="460" cy="475" r="26" fill="#93c5fd"/>
                         <text x="530" y="475" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">Point B</text>
-                        <text x="530" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">E<sub>p</sub> = max</text>
-                        <text x="530" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">E<sub>k</sub> = 0</text>
+                        <text x="530" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = max</text>
+                        <text x="530" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ek = 0</text>
                     </g>
 
                     <!-- Center Labels (Point A) -->
                     <g>
                         <text x="310" y="630" font-size="15" font-weight="extrabold" fill="#0f172a" text-anchor="middle">Point A (Center)</text>
-                        <text x="310" y="650" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">E<sub>k</sub> = max</text>
-                        <text x="310" y="668" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">E<sub>p</sub> = 0</text>
+                        <text x="310" y="650" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">Ek = max</text>
+                        <text x="310" y="668" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ep = 0</text>
                     </g>
 
                     <!-- Live Pendulum -->
                     <line id="activeString" x1="310" y1="85" x2="310" y2="525" stroke="#047857" stroke-width="2.5"/>
-                    <g id="activeBob" class="cursor-grab active:cursor-grabbing" transform="translate(310, 525)">
+                    <g id="activeBob" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(310, 525)">
                         <circle cx="0" cy="0" r="26" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
-                        <circle cx="0" cy="0" r="40" fill="transparent"/>
+                        <circle cx="0" cy="0" r="42" fill="transparent"/>
                     </g>
                 </svg>
 
@@ -211,7 +312,6 @@
                         </marker>
                     </defs>
 
-                    <!-- Ground -->
                     <rect x="0" y="540" width="900" height="80" fill="#f8fafc"/>
                     <line x1="0" y1="540" x2="900" y2="540" stroke="#334155" stroke-width="2"/>
 
@@ -237,18 +337,18 @@
                     <!-- Diagram Annotations -->
                     <g>
                         <!-- Hill 1 -->
-                        <text x="250" y="70" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan><tspan font-size="13" dy="-2.5" dx="2"> maximum</tspan></text>
-                        <text x="250" y="88" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan><tspan font-size="13" dy="-2.5" dx="2"> = 0</tspan></text>
+                        <text x="250" y="70" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep maximum</text>
+                        <text x="250" y="88" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">Ek = 0</text>
                         <line x1="258" y1="96" x2="276" y2="124" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arr)"/>
 
                         <!-- Downhill -->
-                        <text x="460" y="250" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan><tspan font-size="13" dy="-2.5" dx="2"> is transferred</tspan></text>
-                        <text x="460" y="268" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">to E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan></text>
+                        <text x="460" y="250" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">Ep is transferred</text>
+                        <text x="460" y="268" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">to Ek</text>
                         <line x1="445" y1="275" x2="415" y2="335" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arr)"/>
 
                         <!-- Valley -->
-                        <text x="500" y="575" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">E<tspan font-size="10" dy="2.5" dx="-1.5">k</tspan><tspan font-size="13" dy="-2.5" dx="2"> maximum</tspan></text>
-                        <text x="500" y="592" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">E<tspan font-size="10" dy="2.5" dx="-1.5">p</tspan><tspan font-size="13" dy="-2.5" dx="2"> = 0</tspan></text>
+                        <text x="500" y="575" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">Ek maximum</text>
+                        <text x="500" y="592" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = 0</text>
 
                         <!-- Flat Ground Indicator -->
                         <text x="835" y="525" font-size="11" font-weight="bold" fill="#047857" text-anchor="middle">Flat Ground Slide</text>
@@ -256,7 +356,7 @@
                     </g>
 
                     <!-- Coaster Cart -->
-                    <g id="activeCoasterCart" class="cursor-grab active:cursor-grabbing" transform="translate(280, 140)">
+                    <g id="activeCoasterCart" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(280, 140)">
                         <circle cx="-12" cy="4" r="4" fill="#1e293b"/>
                         <circle cx="12" cy="4" r="4" fill="#1e293b"/>
                         <path d="M -18 3 L -16 -8 Q -10 -12 0 -12 Q 12 -12 18 -2 L 16 3 Z" fill="#ef4444"/>
@@ -268,143 +368,185 @@
 
             </div>
 
-            <!-- Playback Bar with Speed Controls -->
-            <div class="px-4 py-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-white shrink-0">
-                <div class="flex items-center gap-2">
-                    <button id="btnPlay" onclick="toggleSimulation()" class="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition">
+            <!-- Playback Bar -->
+            <div class="px-2 sm:px-4 py-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 bg-white shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button id="btnPlay" onclick="toggleSimulation()" class="px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] sm:text-xs shadow-xs flex items-center gap-1.5 transition">
                         <span id="playIcon">▶</span>
                         <span id="btnPlayText">Release</span>
                     </button>
-                    <button onclick="resetSimulation()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                    <button onclick="resetSimulation()" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] sm:text-xs transition">
                         ↺ Reset
                     </button>
 
-                    <!-- Speed Controls (Normal vs Slow Mo) -->
-                    <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold ml-1">
-                        <button id="btnSpeedNormal" onclick="setSpeed(1.0)" class="px-2.5 py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-[11px]">
-                            1.0x Normal
+                    <!-- Speed Controls -->
+                    <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs font-semibold">
+                        <button id="btnSpeedNormal" onclick="setSpeed(1.0)" class="px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs">
+                            1.0x
                         </button>
-                        <button id="btnSpeedSlow" onclick="setSpeed(0.25)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-[11px] flex items-center gap-1">
-                            <span>🐌</span> Slow Mo (0.25x)
+                        <button id="btnSpeedSlow" onclick="setSpeed(0.25)" class="px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs flex items-center gap-1">
+                            <span>🐌</span> Slow Mo
                         </button>
                     </div>
                 </div>
 
-                <div class="text-xs text-slate-500 font-medium">
+                <div class="text-[10px] sm:text-xs text-slate-500 font-medium">
                     Time: <span id="timeDisplay" class="font-bold text-slate-800 font-mono">0.00 s</span>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Compact & Clear Physics Dashboard -->
-        <div class="lg:col-span-5 flex flex-col justify-between gap-2.5 min-h-0">
+        <!-- Right Column: Dashboard -->
+        <div id="dashboardCol" class="flex-1 lg:flex-none lg:col-span-5 flex flex-col justify-between gap-2 min-h-0 overflow-y-auto lg:overflow-visible pr-0.5">
             
-            <!-- Energy Bar Card -->
-            <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-3.5 shadow-xs">
-                <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                    <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Live Energy Distribution</span>
-                    <span class="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                        E<sub>Total</sub> = Constant
+            <!-- Live Energy Distribution Card -->
+            <div id="cardEnergy" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-4 shadow-xs shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+                    <span class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span class="text-teal-600">⚡</span> Live Energy Distribution
+                    </span>
+                    <span class="text-[10px] sm:text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        E<sub>Total</sub> = Malar (Constant)
                     </span>
                 </div>
 
                 <!-- Potential Energy Meter -->
-                <div class="mb-3">
-                    <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <div class="mb-2">
+                    <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1">
                         <span class="text-emerald-700 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded bg-emerald-600 inline-block"></span>
-                            Potential Energy (E<sub>p</sub> = mgh)
+                            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-600 inline-block"></span>
+                            E<sub>p</sub> = mgh
                         </span>
-                        <span id="dispEp" class="font-mono text-emerald-800 text-sm">196.2 J (100%)</span>
+                        <span id="dispEp" class="font-mono text-emerald-800 font-extrabold text-xs sm:text-sm">196.2 J (100%)</span>
                     </div>
-                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div id="barEp" class="h-full bg-emerald-500 energy-bar-fill rounded-full" style="width: 100%;"></div>
+                    <div class="w-full h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div id="barEp" class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 energy-bar-fill rounded-full" style="width: 100%;"></div>
                     </div>
                 </div>
 
                 <!-- Kinetic Energy Meter -->
-                <div class="mb-3">
-                    <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <div class="mb-2">
+                    <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1">
                         <span class="text-blue-700 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded bg-blue-600 inline-block"></span>
-                            Kinetic Energy (E<sub>k</sub> = ½mv²)
+                            <span class="w-2.5 h-2.5 rounded-sm bg-blue-600 inline-block"></span>
+                            E<sub>k</sub> = ½mv²
                         </span>
-                        <span id="dispEk" class="font-mono text-blue-800 text-sm">0.0 J (0%)</span>
+                        <span id="dispEk" class="font-mono text-blue-800 font-extrabold text-xs sm:text-sm">0.0 J (0%)</span>
                     </div>
-                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div id="barEk" class="h-full bg-blue-500 energy-bar-fill rounded-full" style="width: 0%;"></div>
+                    <div class="w-full h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div id="barEk" class="h-full bg-gradient-to-r from-blue-500 to-blue-600 energy-bar-fill rounded-full" style="width: 0%;"></div>
                     </div>
                 </div>
 
-                <!-- Total Mechanical Energy -->
-                <div>
-                    <div class="flex justify-between items-center text-xs font-bold mb-1">
-                        <span class="text-slate-600">Total Mechanical Energy (E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>)</span>
-                        <span id="dispTotal" class="font-mono text-slate-900 text-sm font-extrabold">196.2 J</span>
-                    </div>
-                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div class="h-full bg-slate-700 rounded-full w-full"></div>
-                    </div>
+                <!-- Total Energy Equation & Readout -->
+                <div class="flex justify-between items-center text-xs sm:text-sm font-bold text-slate-700 pt-1 border-t border-slate-100">
+                    <span>E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub></span>
+                    <span id="dispTotal" class="font-mono text-slate-900 font-extrabold text-sm sm:text-base">196.2 J</span>
                 </div>
             </div>
 
-            <!-- Key Physical Metrics -->
-            <div class="grid grid-cols-2 gap-2.5">
-                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-3 text-center shadow-xs">
-                    <p id="labelMetric1" class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Height (h)</p>
-                    <p id="valMetric1" class="text-xl sm:text-2xl font-black text-slate-900 font-mono my-0.5">10.0 <span class="text-xs font-semibold text-slate-500">m</span></p>
-                    <span id="badgeMetric1" class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 inline-block">Top (h)</span>
+            <!-- Key Metrics Grid -->
+            <div id="metricsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+                <!-- Metric 1: Height or Angle -->
+                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex flex-col justify-between items-center shadow-xs text-center">
+                    <p id="labelMetric1" class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Height (h)</p>
+                    <p id="valMetric1" class="text-base sm:text-xl font-black text-slate-900 font-mono my-0.5">10.0 <span class="text-xs font-semibold text-slate-500">m</span></p>
+                    <span id="badgeMetric1" class="text-[9px] sm:text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Top (h)</span>
                 </div>
-                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-3 text-center shadow-xs">
-                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Velocity (v)</p>
-                    <p id="valVelocity" class="text-xl sm:text-2xl font-black text-blue-600 font-mono my-0.5">0.00 <span class="text-xs font-semibold text-slate-500">m/s</span></p>
-                    <span class="text-[11px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 inline-block font-mono">g = 9.81 m/s²</span>
+
+                <!-- Metric 2: Velocity -->
+                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex flex-col justify-between items-center shadow-xs text-center">
+                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Velocity (v)</p>
+                    <p id="valVelocity" class="text-base sm:text-xl font-black text-blue-600 font-mono my-0.5">0.00 <span class="text-xs font-semibold text-slate-500">m/s</span></p>
+                    <span class="text-[9px] sm:text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 font-mono">v = √(2Ek/m)</span>
+                </div>
+
+                <!-- Metric 3: Gravity -->
+                <div id="pcMetric3" class="flex bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex-col justify-between items-center shadow-xs text-center">
+                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Gravity (g)</p>
+                    <p class="text-base sm:text-xl font-black text-emerald-700 font-mono my-0.5">9.81 <span class="text-xs font-semibold text-slate-500">m/s²</span></p>
+                    <span class="text-[9px] sm:text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Earth (Std)</span>
+                </div>
+
+                <!-- Metric 4: Momentum -->
+                <div id="pcMetric4" class="flex bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex-col justify-between items-center shadow-xs text-center">
+                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Momentum (p)</p>
+                    <p id="valMomentum" class="text-base sm:text-xl font-black text-purple-700 font-mono my-0.5">0.0 <span class="text-xs font-semibold text-slate-500">kg·m/s</span></p>
+                    <span class="text-[9px] sm:text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-mono">p = m·v</span>
                 </div>
             </div>
 
-            <!-- Parameters Adjuster -->
-            <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-3.5 shadow-xs">
-                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2.5">Adjust Parameters</div>
-                <div class="space-y-2.5">
+            <!-- Parameters Adjuster Card -->
+            <div id="cardParams" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-3.5 shadow-xs shrink-0">
+                <div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 mb-2 flex items-center justify-between">
+                    <span>Pelaras Parameter</span>
+                    <span class="text-[10px] sm:text-xs font-semibold text-slate-500">Ubah nilai masa nyata</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <!-- Slider 1 -->
                     <div>
-                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
-                            <span id="param1Label" class="text-slate-700">Height (h)</span>
-                            <span id="param1Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">10.0 m</span>
+                        <div class="flex justify-between items-center text-xs sm:text-sm font-semibold mb-1">
+                            <span id="param1Label" class="text-slate-700 truncate">Height (h)</span>
+                            <span id="param1Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-xs">10.0 m</span>
                         </div>
                         <input id="inputParam1" type="range" min="5" max="25" step="0.5" value="10" 
-                               class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam1(this.value)">
+                               class="w-full h-1.5 sm:h-2 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam1(this.value)">
                     </div>
 
                     <!-- Slider 2 -->
                     <div>
-                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
-                            <span id="param2Label" class="text-slate-700">Mass (m)</span>
-                            <span id="param2Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">2.0 kg</span>
+                        <div class="flex justify-between items-center text-xs sm:text-sm font-semibold mb-1">
+                            <span id="param2Label" class="text-slate-700 truncate">Mass (m)</span>
+                            <span id="param2Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-xs">2.0 kg</span>
                         </div>
                         <input id="inputParam2" type="range" min="0.5" max="5.0" step="0.1" value="2.0" 
-                               class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam2(this.value)">
+                               class="w-full h-1.5 sm:h-2 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam2(this.value)">
                     </div>
                 </div>
             </div>
 
-            <!-- Concise Concept Box -->
-            <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-3 text-xs shadow-xs text-slate-700 leading-relaxed">
-                <span class="font-extrabold text-teal-800">Principle:</span>
-                <span id="conceptText" class="font-normal text-slate-600">
-                    Energy cannot be created or destroyed. As height changes, potential energy transforms into kinetic energy while total mechanical energy (E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>) remains constant.
-                </span>
+            <!-- Scientific Principles Card -->
+            <div id="cardConcept" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-3 text-xs sm:text-sm shadow-xs text-slate-700 leading-relaxed shrink-0 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-extrabold text-teal-800 flex items-center gap-1">
+                            <span>📘</span> Prinsip Fizik:
+                        </span>
+                        <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Fizik Kejuruteraan
+                        </span>
+                    </div>
+                    <p id="conceptText" class="font-normal text-slate-600 text-xs sm:text-sm">
+                        Tenaga tidak boleh dicipta atau dimusnahkan. Jumlah tenaga mekanik sentiasa malar: E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>.
+                    </p>
+                </div>
+
+                <!-- Educational Formula Strip -->
+                <div id="pcFormulaStrip" class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 text-center text-xs font-semibold">
+                    <div class="bg-emerald-50/70 p-1.5 rounded-lg border border-emerald-200/60">
+                        <span class="text-emerald-800 font-bold block text-[11px]">E<sub>p</sub> = mgh</span>
+                        <span class="text-slate-500 text-[10px]">Tenaga Keupayaan</span>
+                    </div>
+                    <div class="bg-blue-50/70 p-1.5 rounded-lg border border-blue-200/60">
+                        <span class="text-blue-800 font-bold block text-[11px]">E<sub>k</sub> = ½mv²</span>
+                        <span class="text-slate-500 text-[10px]">Tenaga Kinetik</span>
+                    </div>
+                    <div class="bg-teal-50/70 p-1.5 rounded-lg border border-teal-200/60">
+                        <span class="text-teal-800 font-bold block text-[11px]">E<sub>Total</sub> = Tetap</span>
+                        <span class="text-slate-500 text-[10px]">Keabadian Tenaga</span>
+                    </div>
+                </div>
             </div>
 
         </div>
     </main>
 
-    <!-- Custom Deep Navy Educational Footer -->
-    <footer class="w-full max-w-6xl mx-auto bg-[#0b1428] border border-slate-800/80 rounded-xl px-4 py-2 flex flex-col items-center justify-center text-center shadow-sm shrink-0">
-        <p class="text-[11px] sm:text-xs text-slate-200 font-medium tracking-wide">
+    <!-- Clean Bright Centered Footer -->
+    <footer class="w-full max-w-7xl mx-auto bg-white/95 backdrop-blur border border-emerald-200/80 rounded-lg px-3 sm:px-4 py-1.5 flex flex-col items-center justify-center text-center shadow-xs shrink-0 gap-0.5">
+        <p class="text-[10px] sm:text-xs text-slate-700 font-bold tracking-wide">
             &copy; 2026 Mohd Saiful bin Pahrudin | Unit Sains JMSK, Politeknik Port Dickson
         </p>
-        <p class="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5 tracking-wider">
+        <p class="text-[9px] sm:text-[11px] text-slate-500 font-medium tracking-wider">
             All Rights Reserved &bull; For Educational Use Only
         </p>
     </footer>
@@ -414,6 +556,7 @@
         const G = 9.81;
 
         const state = {
+            viewMode: 'pc',
             activeSim: 1,
             isRunning: false,
             isDragging: false,
@@ -426,7 +569,18 @@
             sim3: { hTotal: 45.0, trackDist: 0.0, mass: 400.0, time: 0.0 }
         };
 
-        // DOM elements
+        // DOM elements cache
+        const appBody = document.getElementById('appBody');
+        const mainWorkspace = document.getElementById('mainWorkspace');
+        const btnViewPC = document.getElementById('btnViewPC');
+        const btnViewMobile = document.getElementById('btnViewMobile');
+
+        const simCanvasCol = document.getElementById('simCanvasCol');
+        const dashboardCol = document.getElementById('dashboardCol');
+        const pcMetric3 = document.getElementById('pcMetric3');
+        const pcMetric4 = document.getElementById('pcMetric4');
+        const pcFormulaStrip = document.getElementById('pcFormulaStrip');
+
         const subTitle = document.getElementById('subTitle');
         const statusText = document.getElementById('statusText');
         const timeDisplay = document.getElementById('timeDisplay');
@@ -459,6 +613,7 @@
         const valMetric1 = document.getElementById('valMetric1');
         const badgeMetric1 = document.getElementById('badgeMetric1');
         const valVelocity = document.getElementById('valVelocity');
+        const valMomentum = document.getElementById('valMomentum');
 
         const param1Label = document.getElementById('param1Label');
         const param1Val = document.getElementById('param1Val');
@@ -468,19 +623,48 @@
         const inputParam2 = document.getElementById('inputParam2');
         const conceptText = document.getElementById('conceptText');
 
+        // View Mode Switcher
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            if (mode === 'pc') {
+                btnViewPC.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold";
+                btnViewMobile.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold";
+                
+                mainWorkspace.classList.remove('mode-mobile-container');
+                simCanvasCol.className = "flex-[1.5] lg:flex-none lg:col-span-7 bg-white/95 rounded-xl border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-[340px] sm:min-h-[400px]";
+                dashboardCol.className = "flex-1 lg:flex-none lg:col-span-5 flex flex-col justify-between gap-2 min-h-0 overflow-y-auto lg:overflow-visible pr-0.5";
+                
+                if (pcMetric3) pcMetric3.classList.remove('hidden');
+                if (pcMetric4) pcMetric4.classList.remove('hidden');
+                if (pcFormulaStrip) pcFormulaStrip.classList.remove('hidden');
+            } else {
+                btnViewPC.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold";
+                btnViewMobile.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold";
+                
+                mainWorkspace.classList.add('mode-mobile-container');
+                simCanvasCol.className = "flex-[1.45] sm:flex-[1.5] bg-white/95 rounded-lg border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-[300px] sm:min-h-[360px]";
+                dashboardCol.className = "flex-1 flex flex-col justify-between gap-1.5 min-h-0 overflow-hidden";
+                
+                if (pcMetric3) pcMetric3.classList.add('hidden');
+                if (pcMetric4) pcMetric4.classList.add('hidden');
+                if (pcFormulaStrip) pcFormulaStrip.classList.add('hidden');
+            }
+            updateUI();
+        }
+
         // Speed adjustment
         function setSpeed(speed) {
             state.timeScale = speed;
             if (speed === 1.0) {
-                btnSpeedNormal.className = "px-2.5 py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-[11px]";
-                btnSpeedSlow.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-[11px] flex items-center gap-1";
+                btnSpeedNormal.className = "px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs";
+                btnSpeedSlow.className = "px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs flex items-center gap-1";
             } else {
-                btnSpeedNormal.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-[11px]";
-                btnSpeedSlow.className = "px-2.5 py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-[11px] flex items-center gap-1";
+                btnSpeedNormal.className = "px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs";
+                btnSpeedSlow.className = "px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs flex items-center gap-1";
             }
         }
 
-        // Switch simulator
+        // Switch simulator models
         function switchSimulator(id) {
             if (state.animId) cancelAnimationFrame(state.animId);
             state.isRunning = false;
@@ -489,10 +673,12 @@
 
             [1, 2, 3].forEach(n => {
                 const btn = document.getElementById(`tab${n}`);
-                if (n === id) {
-                    btn.className = "px-3 py-1 rounded-md bg-teal-700 text-white shadow-xs transition";
-                } else {
-                    btn.className = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition";
+                if (btn) {
+                    if (n === id) {
+                        btn.className = "px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-center";
+                    } else {
+                        btn.className = "px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center";
+                    }
                 }
             });
 
@@ -501,31 +687,31 @@
                 svgSim2.classList.add('hidden');
                 svgSim3.classList.add('hidden');
                 subTitle.textContent = "Model 1: Free-Falling Coconut";
-                conceptText.innerHTML = "Throughout free fall, gravitational potential energy transforms into kinetic energy while total mechanical energy (E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>) remains constant.";
+                conceptText.innerHTML = "Jatuhan bebas: Tenaga keupayaan graviti (E<sub>p</sub> = mgh) bertukar sepenuhnya ke tenaga kinetik (E<sub>k</sub> = ½mv²). Jumlah tenaga mekanik kekal malar sepanjang lintasan.";
 
-                param1Label.textContent = "Height (h)";
+                param1Label.textContent = "Tree Height (h)";
                 inputParam1.min = "5"; inputParam1.max = "25"; inputParam1.step = "0.5";
                 inputParam1.value = state.sim1.hTotal;
                 param1Val.textContent = `${state.sim1.hTotal.toFixed(1)} m`;
 
-                param2Label.textContent = "Mass (m)";
+                param2Label.textContent = "Coconut Mass (m)";
                 inputParam2.min = "0.5"; inputParam2.max = "5.0"; inputParam2.step = "0.1";
                 inputParam2.value = state.sim1.mass;
                 param2Val.textContent = `${state.sim1.mass.toFixed(1)} kg`;
 
                 quickJumps.innerHTML = `
-                    <button onclick="jumpSim1('top')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Top</button>
-                    <button onclick="jumpSim1('mid')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">½ h</button>
-                    <button onclick="jumpSim1('ground')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Ground</button>
+                    <button onclick="jumpSim1('top')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Top</button>
+                    <button onclick="jumpSim1('mid')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">½ h</button>
+                    <button onclick="jumpSim1('ground')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Ground</button>
                 `;
             } else if (id === 2) {
                 svgSim1.classList.add('hidden');
                 svgSim2.classList.remove('hidden');
                 svgSim3.classList.add('hidden');
                 subTitle.textContent = "Model 2: Simple Pendulum";
-                conceptText.innerHTML = "At extreme points C and B, velocity is zero and potential energy is maximum. At center point A, potential energy converts completely to maximum kinetic energy.";
+                conceptText.innerHTML = "Ayunan bandul: Titik ekstrem C & B mempunyai halaju sifar dan E<sub>p</sub> maksimum. Pada titik tengah A, kedudukan terendah menghasilkan E<sub>k</sub> maksimum.";
 
-                param1Label.textContent = "Max Angle";
+                param1Label.textContent = "Max Angle (θ)";
                 inputParam1.min = "15"; inputParam1.max = "65"; inputParam1.step = "1";
                 const deg = Math.round(state.sim2.thetaMax * 180 / Math.PI);
                 inputParam1.value = deg;
@@ -537,16 +723,16 @@
                 param2Val.textContent = `${state.sim2.mass.toFixed(1)} kg`;
 
                 quickJumps.innerHTML = `
-                    <button onclick="jumpSim2('C')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Point C</button>
-                    <button onclick="jumpSim2('A')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Point A</button>
-                    <button onclick="jumpSim2('B')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Point B</button>
+                    <button onclick="jumpSim2('C')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt C</button>
+                    <button onclick="jumpSim2('A')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt A</button>
+                    <button onclick="jumpSim2('B')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt B</button>
                 `;
             } else if (id === 3) {
                 svgSim1.classList.add('hidden');
                 svgSim2.classList.add('hidden');
                 svgSim3.classList.remove('hidden');
                 subTitle.textContent = "Model 3: Roller Coaster & Slide Track";
-                conceptText.innerHTML = "The cart trades potential energy for kinetic energy downhill, regains height up hill 2, and exits sliding horizontally on flat ground where h = 0 and E<sub>p</sub> = 0.";
+                conceptText.innerHTML = "Coaster: Puncak 1 (E<sub>p</sub> maks) menukar tenaga kepada E<sub>k</sub> di lembah, mendaki bukit 2, dan meluncur di atas tanah mendatar di mana h = 0 dan E<sub>p</sub> = 0.";
 
                 param1Label.textContent = "Hill 1 Height (h)";
                 inputParam1.min = "25"; inputParam1.max = "60"; inputParam1.step = "1";
@@ -559,9 +745,9 @@
                 param2Val.textContent = `${state.sim3.mass.toFixed(0)} kg`;
 
                 quickJumps.innerHTML = `
-                    <button onclick="jumpSim3('peak')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Peak</button>
-                    <button onclick="jumpSim3('valley')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Valley</button>
-                    <button onclick="jumpSim3('flat')" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">Flat Ground</button>
+                    <button onclick="jumpSim3('peak')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Peak</button>
+                    <button onclick="jumpSim3('valley')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Valley</button>
+                    <button onclick="jumpSim3('flat')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Flat</button>
                 `;
 
                 if (!coasterLen && coasterTrackPath.getTotalLength) {
@@ -583,7 +769,6 @@
                 const epPct = Math.round((ep / eTotal) * 100);
                 const ekPct = 100 - epPct;
 
-                // Center stops at 692 so coconut bottom (692 + 13 = 705) rests exactly on the floor
                 const svgY = 125 + ((s.hTotal - hCur) / s.hTotal) * 567;
                 coconutEntity.setAttribute('transform', `translate(228, ${svgY})`);
 
@@ -597,10 +782,15 @@
                 valMetric1.innerHTML = `${hCur.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
                 valVelocity.innerHTML = `${Math.abs(s.v).toFixed(2)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
 
+                if (valMomentum) {
+                    const momentum = s.mass * Math.abs(s.v);
+                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">kg·m/s</span>`;
+                }
+
                 if (hCur >= s.hTotal - 0.1) badgeMetric1.textContent = "Top (h)";
                 else if (Math.abs(hCur - s.hTotal / 2) < 0.3) badgeMetric1.textContent = "½ of h";
-                else if (hCur <= 0.05) badgeMetric1.textContent = "Ground (h=0)";
-                else badgeMetric1.textContent = "Free Falling";
+                else if (hCur <= 0.05) badgeMetric1.textContent = "Ground";
+                else badgeMetric1.textContent = "Falling";
 
                 timeDisplay.textContent = `${s.time.toFixed(2)} s`;
 
@@ -622,7 +812,6 @@
                 activeString.setAttribute('y2', bobY);
                 activeBob.setAttribute('transform', `translate(${bobX}, ${bobY})`);
 
-                // Trajectory arc
                 const xC = 310 - 440 * Math.sin(s.thetaMax);
                 const yC = 85 + 440 * Math.cos(s.thetaMax);
                 const xB = 310 + 440 * Math.sin(s.thetaMax);
@@ -640,10 +829,15 @@
                 valMetric1.innerHTML = `${Math.abs(deg).toFixed(1)}<span class="text-xs font-semibold text-slate-500">°</span>`;
                 valVelocity.innerHTML = `${speed.toFixed(2)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
 
-                if (Math.abs(s.theta) < 0.04) badgeMetric1.textContent = "Point A (Center)";
-                else if (s.theta <= -s.thetaMax + 0.04) badgeMetric1.textContent = "Point C (Extreme)";
-                else if (s.theta >= s.thetaMax - 0.04) badgeMetric1.textContent = "Point B (Extreme)";
-                else badgeMetric1.textContent = "Oscillating";
+                if (valMomentum) {
+                    const momentum = s.mass * speed;
+                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">kg·m/s</span>`;
+                }
+
+                if (Math.abs(s.theta) < 0.04) badgeMetric1.textContent = "Point A";
+                else if (s.theta <= -s.thetaMax + 0.04) badgeMetric1.textContent = "Point C";
+                else if (s.theta >= s.thetaMax - 0.04) badgeMetric1.textContent = "Point B";
+                else badgeMetric1.textContent = "Swinging";
 
                 timeDisplay.textContent = `${s.time.toFixed(2)} s`;
 
@@ -662,7 +856,6 @@
                 const epPct = Math.round((ep / eTotal) * 100);
                 const ekPct = 100 - epPct;
 
-                // Angle
                 const pNext = coasterTrackPath.getPointAtLength(Math.min(coasterLen, d + 2));
                 const pPrev = coasterTrackPath.getPointAtLength(Math.max(0, d - 2));
                 const angle = Math.atan2(pNext.y - pPrev.y, pNext.x - pPrev.x) * 180 / Math.PI;
@@ -678,9 +871,14 @@
                 valMetric1.innerHTML = `${hCur.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
                 valVelocity.innerHTML = `${speed.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
 
-                if (pt.x >= 790) badgeMetric1.textContent = "Flat Slide (h=0)";
-                else if (hCur >= s.hTotal - 0.5) badgeMetric1.textContent = "Peak (Ep max)";
-                else if (hCur <= 0.5) badgeMetric1.textContent = "Valley (Ek max)";
+                if (valMomentum) {
+                    const momentum = (s.mass * speed) / 1000;
+                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">k·N·s</span>`;
+                }
+
+                if (pt.x >= 790) badgeMetric1.textContent = "Flat Slide";
+                else if (hCur >= s.hTotal - 0.5) badgeMetric1.textContent = "Peak";
+                else if (hCur <= 0.5) badgeMetric1.textContent = "Valley";
                 else badgeMetric1.textContent = "Coasting";
 
                 timeDisplay.textContent = `${s.time.toFixed(2)} s`;
@@ -705,7 +903,7 @@
                         s.v = Math.sqrt(2 * G * s.hTotal);
                         state.isRunning = false;
                         btnPlayText.textContent = "Restart";
-                        statusText.textContent = "Landed on Ground";
+                        statusText.textContent = "Ground";
                     }
                 } else if (state.activeSim === 2) {
                     const s = state.sim2;
@@ -729,7 +927,7 @@
                         s.trackDist = coasterLen - 12;
                         state.isRunning = false;
                         btnPlayText.textContent = "Restart";
-                        statusText.textContent = "Finished Slide on Ground";
+                        statusText.textContent = "Finished";
                     }
                 }
                 updateUI();
@@ -781,7 +979,7 @@
             updateUI();
         }
 
-        // Jumps
+        // Jump positions
         function jumpSim1(pos) {
             state.isRunning = false;
             state.sim1.time = 0;
@@ -820,7 +1018,7 @@
             updateUI();
         }
 
-        // Parameter Sliders
+        // Parameter Sliders Handlers
         function onParam1(val) {
             const num = parseFloat(val);
             if (state.activeSim === 1) {
@@ -861,7 +1059,7 @@
             return pt.matrixTransform(svg.getScreenCTM().inverse());
         }
 
-        function startDrag() {
+        function startDrag(e) {
             if (state.isRunning) toggleSimulation();
             state.isDragging = true;
             statusText.textContent = "Dragging";
@@ -869,11 +1067,10 @@
 
         function moveDrag(e) {
             if (!state.isDragging) return;
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
 
             if (state.activeSim === 1) {
                 const pt = getSVGPoint(svgSim1, e);
-                // Clamp center to 692 so coconut rests on ground level (y=705)
                 const clampedY = Math.max(125, Math.min(692, pt.y));
                 state.sim1.currentY = state.sim1.hTotal * (1 - (clampedY - 125) / 567);
                 state.sim1.v = 0;
@@ -916,7 +1113,7 @@
         window.addEventListener('mouseup', endDrag);
         window.addEventListener('touchend', endDrag);
 
-        // Security locks
+        // Security protections: disable right-click context menu and inspect shortcuts safely
         document.addEventListener('contextmenu', e => e.preventDefault(), { capture: true });
         document.addEventListener('keydown', e => {
             if (e.keyCode === 123 || (e.ctrlKey && ['u', 's', 'p'].includes(e.key.toLowerCase())) || 
@@ -927,9 +1124,22 @@
         }, { capture: true });
         document.addEventListener('dragstart', e => e.preventDefault());
 
-        window.onload = function() {
+        // Instant Initialization (Guaranteed to execute immediately in any iframe / browser window)
+        function initApp() {
+            if (window.innerWidth < 1024) {
+                setViewMode('mobile');
+            } else {
+                setViewMode('pc');
+            }
             switchSimulator(1);
-        };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
+```
