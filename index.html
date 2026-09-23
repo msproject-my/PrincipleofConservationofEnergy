@@ -1,1145 +1,1562 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulator - Principle of Conservation of Energy</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
     <style>
-        * {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-user-select: none !important;
-            -moz-user-select: none !important;
-            user-select: none !important;
-            -webkit-touch-callout: none !important;
-            box-sizing: border-box;
-        }
         input[type=range] {
-            accent-color: #0d9488;
+            accent-color: #059669;
         }
-        .energy-bar-fill {
+        .energy-bar-transition {
             transition: width 0.05s linear;
         }
-        sub {
-            font-size: 0.75em;
-            line-height: 0;
-            position: relative;
-            vertical-align: baseline;
-            bottom: -0.2em;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(167, 243, 208, 0.8);
+        }
+        .tab-btn.active {
+            background-color: #0f766e;
+            color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .tab-btn:not(.active) {
+            color: #475569;
+        }
+        .tab-btn:not(.active):hover {
+            color: #0f172a;
+            background-color: #f1f5f9;
         }
         .touch-draggable {
             touch-action: none;
         }
-        /* Mobile Simulator Mode Container */
-        .mode-mobile-container {
-            max-width: 480px !important;
-            margin-left: auto;
-            margin-right: auto;
+        * {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
     </style>
 </head>
-<body id="appBody" class="bg-emerald-50/60 text-slate-800 min-h-screen min-h-[100dvh] h-screen h-[100dvh] flex flex-col justify-between p-1.5 sm:p-2.5 overflow-hidden select-none" oncontextmenu="return false;">
+<body class="bg-[#f0f9f4] text-slate-800 min-h-screen flex flex-col font-sans" oncontextmenu="return false;">
 
-    <!-- Responsive Header with Mode Switcher & Model Switcher -->
-    <header class="w-full max-w-7xl mx-auto flex flex-wrap items-center justify-between bg-white/95 backdrop-blur border border-emerald-200/80 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-xs shrink-0 gap-2 mb-1">
-        <div class="flex items-center gap-2">
-            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs shrink-0">
-                ⚡
-            </div>
-            <div>
-                <h1 class="text-xs sm:text-base font-extrabold text-slate-900 leading-tight">
-                    Conservation of Energy
-                </h1>
-                <p id="subTitle" class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium">Model 1: Free-Falling Coconut</p>
-            </div>
-        </div>
-
-        <!-- Center Controls: Model Tabs & View Mode (PC / Mobile) Switcher -->
-        <div class="flex items-center gap-2 flex-wrap">
-            <!-- Model Switcher -->
-            <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs font-semibold shrink-0">
-                <button id="tab1" onclick="switchSimulator(1)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-center">
-                    1. Free Fall
-                </button>
-                <button id="tab2" onclick="switchSimulator(2)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center">
-                    2. Pendulum
-                </button>
-                <button id="tab3" onclick="switchSimulator(3)" class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center">
-                    3. Coaster
-                </button>
+    <header class="w-full max-w-7xl mx-auto px-2.5 sm:px-4 pt-2.5 shrink-0 z-20">
+        <div class="glass-panel rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
+                        Simulator - Principle of Conservation of Energy
+                    </h1>
+                    <p id="headerSubtitle" class="text-[11px] text-slate-500 font-medium">Model 1: Free-Falling Coconut</p>
+                </div>
             </div>
 
-            <!-- View Layout Switcher (PC View vs Mobile View) -->
-            <div class="flex bg-teal-50/80 p-0.5 rounded-lg border border-teal-200 text-[10px] sm:text-xs font-bold shrink-0">
-                <button id="btnViewPC" onclick="setViewMode('pc')" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold">
-                    <span>💻</span>
-                    <span class="hidden sm:inline">PC View</span>
+            <!-- Simulator Switcher Tabs -->
+            <div class="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-xl text-xs font-bold">
+                <button id="tabBtn1" onclick="switchSimulator(1)" class="tab-btn active px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    <span>🌴</span>
+                    <span>1: Free Fall</span>
                 </button>
-                <button id="btnViewMobile" onclick="setViewMode('mobile')" class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold">
-                    <span>📱</span>
-                    <span class="hidden sm:inline">Mobile View</span>
+                <button id="tabBtn2" onclick="switchSimulator(2)" class="tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    <span>⏱️</span>
+                    <span>2: Pendulum</span>
                 </button>
+                <button id="tabBtn3" onclick="switchSimulator(3)" class="tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    <span>🎢</span>
+                    <span>3: Coaster</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Quick Position Jump Points -->
+            <div id="quickJumpContainer" class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-semibold">
+                <!-- Injected dynamically via JS -->
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace (Adapts dynamically between PC View and Mobile View) -->
-    <main id="mainWorkspace" class="w-full max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-12 gap-2 flex-1 min-h-0 overflow-y-auto lg:overflow-hidden mb-1">
+    <main class="max-w-7xl mx-auto w-full p-2.5 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0">
         
-        <!-- Left Column: Simulation Canvas -->
-        <div id="simCanvasCol" class="flex-none sm:flex-[1.4] lg:flex-none lg:col-span-7 bg-white/95 rounded-lg sm:rounded-xl border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-0">
-            
-            <!-- Stage Header & State Indicator -->
-            <div class="px-2.5 sm:px-3.5 py-1.5 border-b border-slate-100 flex items-center justify-between text-[10px] sm:text-xs shrink-0 bg-slate-50/70">
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                    <span id="statusDot" class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                    <span id="statusText" class="font-bold text-teal-800 uppercase tracking-wide text-[9px] sm:text-[11px]">Ready</span>
-                </div>
-                <!-- Dynamic Jump Points -->
-                <div id="quickJumps" class="flex items-center gap-1">
-                    <!-- Injected dynamically -->
-                </div>
-            </div>
-
-            <!-- Interactive Stage Area -->
-            <div class="relative flex-1 w-full min-h-[220px] sm:min-h-0 flex items-center justify-center p-1 sm:p-2 bg-gradient-to-b from-sky-50/40 via-white to-emerald-50/30 overflow-hidden">
+        <!-- Left Side: Interactive Physics Stage -->
+        <div class="lg:col-span-7 flex flex-col min-h-[460px] lg:min-h-0">
+            <div class="relative bg-gradient-to-b from-sky-50 via-slate-50 to-amber-50/30 rounded-xl border border-slate-200 overflow-hidden shadow-inner flex-1 flex flex-col justify-between">
                 
-                <!-- SVG Model 1: Modern Minimalist Stylized Palm Tree -->
-                <svg id="svgSim1" class="w-full h-full max-h-full block" viewBox="0 0 520 750" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                        <!-- Sleek Trunk Linear Gradient -->
-                        <linearGradient id="modernTrunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#4d2f20"/>
-                            <stop offset="40%" stop-color="#673e2a"/>
-                            <stop offset="70%" stop-color="#784a33"/>
-                            <stop offset="100%" stop-color="#42271a"/>
-                        </linearGradient>
+                <!-- Status Badges -->
+                <div class="absolute top-2.5 left-2.5 z-10 flex flex-wrap gap-1.5 pointer-events-none">
+                    <span class="glass-panel text-slate-700 text-[11px] px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 shadow-xs">
+                        <span id="stateDot" class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                        Status: <span id="simStateLabel" class="text-teal-700 uppercase font-extrabold tracking-wide">Ready at Top</span>
+                    </span>
+                    <span class="glass-panel text-slate-600 text-[11px] px-2 py-1 rounded-lg font-semibold flex items-center gap-1">
+                        ⏱️ Time: <span id="timeElapsed" class="font-mono text-slate-900 font-bold ml-1">0.00 s</span>
+                    </span>
+                </div>
 
-                        <!-- Warm Amber-Golden Coconut Gradient -->
-                        <radialGradient id="amberCoconutGrad" cx="35%" cy="30%" r="65%">
-                            <stop offset="0%" stop-color="#fef08a"/>
-                            <stop offset="30%" stop-color="#f59e0b"/>
-                            <stop offset="75%" stop-color="#d97706"/>
-                            <stop offset="100%" stop-color="#9a3412"/>
-                        </radialGradient>
-                    </defs>
+                <!-- Drag Hint -->
+                <div id="dragHint" class="absolute top-2.5 right-2.5 z-10 bg-slate-900/85 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none transition-opacity duration-300 opacity-90 backdrop-blur-xs flex items-center gap-1.5 shadow-sm">
+                    <span id="dragHintText">💡 Drag the coconut vertically or click 'Release'</span>
+                </div>
 
-                    <!-- Ground: Light Brown Sand/Soil at y = 705 -->
-                    <rect x="0" y="705" width="520" height="45" fill="#d4a373"/>
-                    <path d="M 0 705 Q 130 699 260 705 T 520 705 L 520 750 L 0 750 Z" fill="#ba8352"/>
+                <!-- Simulation Visual Stage -->
+                <div class="relative w-full flex-1 flex items-center justify-center select-none overflow-hidden p-1" id="stageContainer">
+                    
+                    <!-- ================= MODEL 1: COCONUT FALL SVG ================= -->
+                    <svg id="svgSim1" class="w-full h-full max-h-[560px]" viewBox="0 0 520 750" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <linearGradient id="trunkGradNew" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#4a301a"/>
+                                <stop offset="45%" stop-color="#6a4427"/>
+                                <stop offset="85%" stop-color="#7e5230"/>
+                                <stop offset="100%" stop-color="#3d2613"/>
+                            </linearGradient>
+                            <radialGradient id="coconutGoldGrad" cx="35%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#f59e0b"/>
+                                <stop offset="60%" stop-color="#d97706"/>
+                                <stop offset="100%" stop-color="#78350f"/>
+                            </radialGradient>
+                        </defs>
 
-                    <!-- TREE TRUNK -->
-                    <g>
-                        <path d="M 188 705 
-                                 C 202 530, 222 340, 226 135 
-                                 L 235 135 
-                                 C 230 340, 218 530, 226 705 Z" 
-                              fill="url(#modernTrunkGrad)"/>
-                        <path d="M 193 700 C 206 530, 224 340, 228 140" 
-                              stroke="#8d5a3f" 
-                              stroke-width="3" 
-                              stroke-linecap="round" 
-                              fill="none" 
-                              opacity="0.8"/>
-                    </g>
+                        <!-- Ground Surface (Natural Warm Brown) -->
+                        <rect x="0" y="705" width="520" height="45" fill="#d4a373"/>
+                        <path d="M 0 705 Q 130 701 260 705 T 520 705 L 520 750 L 0 750 Z" fill="#ba8352"/>
+                        <line x1="0" y1="705" x2="520" y2="705" stroke="#8c5832" stroke-width="2"/>
 
-                    <!-- PALM FRONDS -->
-                    <g stroke-linejoin="round" stroke-linecap="round">
-                        <!-- Frond 1: Top-Left -->
-                        <g>
-                            <path d="M 230 135 C 205 95, 175 60, 142 42 C 160 55, 175 75, 192 100 Z" fill="#1b331c"/>
-                            <path d="M 230 135 C 205 95, 175 60, 142 42 C 162 70, 185 105, 230 135 Z" fill="#365834"/>
-                            <polygon points="175,70 178,63 186,75" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="198,96 202,89 208,101" fill="#ffffff" opacity="0.95"/>
+                        <!-- Slender Curved Trunk -->
+                        <path d="M 175 705 C 205 500, 250 310, 260 145 L 273 145 C 265 310, 222 500, 235 705 Z" fill="url(#trunkGradNew)" stroke="#3a2211" stroke-width="1.8"/>
+
+                        <!-- Trunk Shading Accent -->
+                        <path d="M 183 705 C 210 500, 253 310, 263 145 L 268 145 C 258 310, 217 500, 195 705 Z" fill="#935e38" opacity="0.45"/>
+
+                        <!-- Palm Fronds (Geometric Faceted Minimalist Vector) -->
+                        <g stroke="#1b331c" stroke-width="1.8" stroke-linejoin="round">
+                            <!-- Frond 1: Left Down -->
+                            <path d="M 266 145 Q 190 180, 145 235 Q 195 210, 225 185 L 218 200 Q 235 180, 266 145" fill="#2d4a2b"/>
+                            <polygon points="175,195 190,192 182,206" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 2: Left Middle Out -->
+                            <path d="M 266 145 Q 170 140, 105 180 Q 165 145, 210 138 L 198 152 Q 225 135, 266 145" fill="#385e36"/>
+                            <polygon points="142,156 158,152 150,165" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 3: Upper Left -->
+                            <path d="M 266 145 Q 190 75, 155 35 Q 210 75, 240 105 L 230 115 Q 248 112, 266 145" fill="#437041"/>
+                            <polygon points="190,75 204,78 196,90" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 4: Top Center -->
+                            <path d="M 266 145 Q 260 50, 275 20 Q 285 60, 278 105 L 288 112 Q 275 125, 266 145" fill="#325430"/>
+                            <polygon points="268,60 278,65 272,76" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 5: Upper Right -->
+                            <path d="M 266 145 Q 330 65, 385 45 Q 345 85, 305 115 L 320 120 Q 295 128, 266 145" fill="#437041"/>
+                            <polygon points="335,76 348,82 338,92" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 6: Right Middle Out -->
+                            <path d="M 266 145 Q 365 125, 430 155 Q 360 145, 315 142 L 332 154 Q 300 145, 266 145" fill="#385e36"/>
+                            <polygon points="370,136 384,142 374,150" fill="#f0f9f4" stroke="none"/>
+
+                            <!-- Frond 7: Right Down -->
+                            <path d="M 266 145 Q 340 190, 375 245 Q 330 205, 295 178 L 305 195 Q 285 170, 266 145" fill="#243f23"/>
+                            <polygon points="328,198 340,205 330,214" fill="#f0f9f4" stroke="none"/>
                         </g>
 
-                        <!-- Frond 2: Top -->
-                        <g>
-                            <path d="M 230 133 C 228 85, 220 50, 202 24 C 215 45, 224 75, 230 133 Z" fill="#1f3d21"/>
-                            <path d="M 230 133 C 228 85, 220 50, 202 24 C 228 48, 238 85, 230 133 Z" fill="#3c653a"/>
-                            <polygon points="212,48 217,42 219,55" fill="#ffffff" opacity="0.95"/>
+                        <!-- Golden Coconuts Cluster at Crown -->
+                        <g filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))">
+                            <circle cx="254" cy="148" r="12" fill="url(#coconutGoldGrad)" stroke="#78350f" stroke-width="1.2"/>
+                            <circle cx="274" cy="145" r="11" fill="url(#coconutGoldGrad)" stroke="#78350f" stroke-width="1.2"/>
+                            <circle cx="264" cy="158" r="13" fill="url(#coconutGoldGrad)" stroke="#78350f" stroke-width="1.2"/>
+                            <ellipse cx="261" cy="154" rx="4" ry="2" fill="#fef08a" opacity="0.6"/>
                         </g>
 
-                        <!-- Frond 3: Top-Right -->
+                        <!-- Vertical Height Dimension Line (h) -->
                         <g>
-                            <path d="M 231 134 C 255 90, 290 55, 335 46 C 308 62, 280 88, 255 120 Z" fill="#244526"/>
-                            <path d="M 231 134 C 255 90, 290 55, 335 46 C 315 75, 285 110, 231 134 Z" fill="#447342"/>
-                            <polygon points="295,72 301,64 306,78" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="268,103 273,95 277,109" fill="#ffffff" opacity="0.95"/>
+                            <line x1="85" y1="125" x2="85" y2="705" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="4 3"/>
+                            <polygon points="85,125 81,137 89,137" fill="#dc2626"/>
+                            <polygon points="85,705 81,693 89,693" fill="#dc2626"/>
+                            <rect x="69" y="398" width="32" height="26" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
+                            <text x="85" y="416" font-size="16" font-style="italic" font-weight="extrabold" fill="#b91c1c" text-anchor="middle">h</text>
                         </g>
 
-                        <!-- Frond 4: Far-Right -->
-                        <g>
-                            <path d="M 232 135 C 275 120, 325 130, 395 160 C 355 165, 310 160, 260 148 Z" fill="#1b331c"/>
-                            <path d="M 232 135 C 275 120, 325 130, 395 160 C 350 178, 295 170, 232 135 Z" fill="#365834"/>
-                            <polygon points="340,154 348,149 350,161" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="295,148 302,142 304,155" fill="#ffffff" opacity="0.95"/>
+                        <!-- Trajectory Fall Guide Line -->
+                        <line x1="140" y1="125" x2="140" y2="705" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+                        <!-- Energy Annotation: Top Level (h) with White Halo Protection -->
+                        <g id="annotTop">
+                            <line x1="150" y1="125" x2="225" y2="125" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="3 2"/>
+                            <polygon points="228,125 220,121 220,129" fill="#dc2626"/>
+                            <text x="238" y="118" font-size="14" font-weight="extrabold" fill="#0f172a" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ek = 0</text>
+                            <text x="238" y="137" font-size="14" font-weight="extrabold" fill="#ea580c" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">100 % Ep</text>
+                            <text x="495" y="127" font-size="15" font-style="italic" font-weight="bold" fill="#334155" text-anchor="end" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">h</text>
                         </g>
 
-                        <!-- Frond 5: Bottom-Right -->
-                        <g>
-                            <path d="M 231 136 C 265 155, 305 195, 345 255 C 322 230, 295 200, 260 175 Z" fill="#1f3d21"/>
-                            <path d="M 231 136 C 265 155, 305 195, 345 255 C 312 245, 275 215, 231 136 Z" fill="#3c653a"/>
-                            <polygon points="310,215 318,211 316,224" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="275,180 282,175 281,188" fill="#ffffff" opacity="0.95"/>
+                        <!-- Energy Annotation: Midpoint (1/2 of h) -->
+                        <g id="annotMid">
+                            <line x1="150" y1="415" x2="225" y2="415" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="3 2"/>
+                            <polygon points="228,415 220,411 220,419" fill="#dc2626"/>
+                            <text x="238" y="408" font-size="14" font-weight="extrabold" fill="#ea580c" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">50 % Ep</text>
+                            <text x="238" y="427" font-size="14" font-weight="extrabold" fill="#2563eb" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">50 % Ek</text>
+                            <text x="495" y="417" font-size="14" font-weight="bold" fill="#334155" text-anchor="end" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">½ of h</text>
                         </g>
 
-                        <!-- Frond 6: Far-Left -->
-                        <g>
-                            <path d="M 229 135 C 185 110, 130 115, 68 145 C 110 145, 155 142, 200 138 Z" fill="#244526"/>
-                            <path d="M 229 135 C 185 110, 130 115, 68 145 C 112 160, 165 158, 229 135 Z" fill="#447342"/>
-                            <polygon points="120,138 114,132 124,131" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="168,140 162,134 172,133" fill="#ffffff" opacity="0.95"/>
+                        <!-- Energy Annotation: Ground (h = 0) with Line Directly on Floor -->
+                        <g id="annotGround">
+                            <line x1="150" y1="705" x2="225" y2="705" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="3 2"/>
+                            <polygon points="228,705 220,701 220,709" fill="#dc2626"/>
+                            <text x="238" y="694" font-size="14" font-weight="extrabold" fill="#2563eb" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">100 % Ek</text>
+                            <text x="238" y="722" font-size="12" font-weight="bold" fill="#64748b" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ep = 0</text>
+                            <text x="495" y="707" font-size="14" font-style="italic" font-weight="bold" fill="#334155" text-anchor="end" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">h = 0</text>
                         </g>
 
-                        <!-- Frond 7: Bottom-Left -->
-                        <g>
-                            <path d="M 229 136 C 195 160, 155 200, 102 245 C 130 225, 160 195, 195 170 Z" fill="#1b331c"/>
-                            <path d="M 229 136 C 195 160, 155 200, 102 245 C 135 235, 175 205, 229 136 Z" fill="#365834"/>
-                            <polygon points="142,210 135,205 145,203" fill="#ffffff" opacity="0.95"/>
-                            <polygon points="182,178 175,173 185,171" fill="#ffffff" opacity="0.95"/>
+                        <!-- Fall Height Guide Indicator Line -->
+                        <line id="coconutHLine" x1="140" y1="125" x2="220" y2="125" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.8"/>
+
+                        <!-- Draggable Interactive Coconut Entity -->
+                        <g id="coconutEntity" class="touch-draggable cursor-grab active:cursor-grabbing" transform="translate(140, 125)">
+                            <circle cx="0" cy="0" r="13" fill="url(#coconutGoldGrad)" stroke="#78350f" stroke-width="1.6" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.3))"/>
+                            <ellipse cx="-4" cy="-4" rx="4" ry="2.2" fill="#fef08a" opacity="0.65"/>
+                            <circle cx="0" cy="0" r="30" fill="transparent"/>
+                        </g>
+                    </svg>
+
+                    <!-- ================= MODEL 2: SIMPLE PENDULUM ================= -->
+                    <svg id="svgSim2" class="w-full h-full max-h-[560px] hidden" viewBox="0 0 620 700" preserveAspectRatio="xMidYMid meet">
+                        <!-- Top Rigid Ceiling Support -->
+                        <g transform="translate(310, 85)">
+                            <rect x="-240" y="-12" width="480" height="18" rx="8" fill="#b4835a" stroke="#8c5832" stroke-width="1.5" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.15))"/>
+                            <path d="M-230 -12 L-220 -20 M-190 -12 L-180 -20 M-150 -12 L-140 -20 M-110 -12 L-100 -20 M-70 -12 L-60 -20 M-30 -12 L-20 -20 M10 -12 L20 -20 M50 -12 L60 -20 M90 -12 L100 -20 M130 -12 L140 -20 M170 -12 L180 -20 M210 -12 L220 -20" stroke="#94633d" stroke-width="1.8" opacity="0.6"/>
+                            <text x="-210" y="32" font-size="16" font-weight="bold" fill="#334155">Rigid support</text>
                         </g>
 
-                        <!-- Frond 8: Lower Center -->
-                        <g>
-                            <path d="M 230 138 C 215 170, 195 205, 172 235 C 188 210, 205 185, 220 160 Z" fill="#244526"/>
-                            <path d="M 230 138 C 215 170, 195 205, 172 235 C 198 220, 218 190, 230 138 Z" fill="#447342"/>
-                            <polygon points="194,198 188,193 197,192" fill="#ffffff" opacity="0.95"/>
+                        <!-- Pivot Pin -->
+                        <circle cx="310" cy="85" r="5" fill="#334155" stroke="#0f172a" stroke-width="1.5"/>
+
+                        <!-- Trajectory Arc -->
+                        <path id="trajectoryArc" d="" stroke="#15803d" stroke-width="2.5" stroke-dasharray="6 5" fill="none" opacity="0.85"/>
+                        <polygon id="arrowLeft" points="0,0 0,0 0,0" fill="#15803d"/>
+                        <polygon id="arrowRight" points="0,0 0,0 0,0" fill="#15803d"/>
+
+                        <!-- Reference C (Left Extreme) - Labels stacked cleanly above bob -->
+                        <g id="ghostC" opacity="0.85">
+                            <line id="stringC" x1="310" y1="85" x2="160" y2="475" stroke="#15803d" stroke-width="2" stroke-dasharray="5 4"/>
+                            <circle id="bobC" cx="160" cy="475" r="28" fill="#7ba2d9" stroke="#466ba8" stroke-width="1.5"/>
+                            <circle cx="160" cy="425" r="13" fill="#fed7aa" stroke="#ea580c" stroke-width="1.2"/>
+                            <text x="160" y="430" font-size="13" font-weight="extrabold" fill="#c2410c" text-anchor="middle">C</text>
+                            <text x="160" y="402" font-size="14" font-weight="extrabold" fill="#1e293b" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Extreme point</text>
+                            <text x="160" y="380" font-size="14" font-weight="extrabold" fill="#0f172a" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ek = 0</text>
+                            <text x="160" y="358" font-size="14" font-weight="extrabold" fill="#ea580c" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ep = max</text>
                         </g>
-                    </g>
 
-                    <!-- ATTACHED GOLDEN-AMBER COCONUTS -->
-                    <g>
-                        <circle cx="216" cy="133" r="12" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
-                        <circle cx="213" cy="129" r="3" fill="#ffffff" opacity="0.6"/>
-                        <circle cx="238" cy="132" r="11" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
-                        <circle cx="235" cy="128" r="2.8" fill="#ffffff" opacity="0.6"/>
-                        <circle cx="227" cy="142" r="13.5" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="2"/>
-                        <circle cx="223" cy="138" r="3.5" fill="#ffffff" opacity="0.65"/>
-                    </g>
+                        <!-- Reference B (Right Extreme) - Labels stacked cleanly above bob -->
+                        <g id="ghostB" opacity="0.85">
+                            <line id="stringB" x1="310" y1="85" x2="460" y2="475" stroke="#15803d" stroke-width="2" stroke-dasharray="5 4"/>
+                            <circle id="bobB" cx="460" cy="475" r="28" fill="#7ba2d9" stroke="#466ba8" stroke-width="1.5"/>
+                            <circle cx="460" cy="425" r="13" fill="#fed7aa" stroke="#ea580c" stroke-width="1.2"/>
+                            <text x="460" y="430" font-size="13" font-weight="extrabold" fill="#c2410c" text-anchor="middle">B</text>
+                            <text x="460" y="402" font-size="14" font-weight="extrabold" fill="#1e293b" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Extreme point</text>
+                            <text x="460" y="380" font-size="14" font-weight="extrabold" fill="#0f172a" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ek = 0</text>
+                            <text x="460" y="358" font-size="14" font-weight="extrabold" fill="#ea580c" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ep = max</text>
+                        </g>
 
-                    <!-- Height Indicator (h) with bottom arrow right on ground line 705 -->
-                    <line x1="168" y1="130" x2="168" y2="705" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
-                    <polygon points="168,125 164,137 172,137" fill="#dc2626"/>
-                    <polygon points="168,705 164,693 172,693" fill="#dc2626"/>
-                    <rect x="152" y="398" width="32" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
-                    <text x="168" y="415" font-size="15" font-style="italic" font-weight="bold" fill="#dc2626" text-anchor="middle">h</text>
+                        <!-- Reference A (Center Equilibrium) -->
+                        <g id="labelsA">
+                            <circle cx="310" cy="575" r="13" fill="#a7f3d0" stroke="#059669" stroke-width="1.2"/>
+                            <text x="310" y="580" font-size="13" font-weight="extrabold" fill="#047857" text-anchor="middle">A</text>
+                            <text x="310" y="605" font-size="15" font-weight="extrabold" fill="#1e293b" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Center point</text>
+                            <text x="310" y="630" font-size="14" font-weight="extrabold" fill="#2563eb" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ek = max</text>
+                            <text x="310" y="652" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">Ep = 0</text>
+                        </g>
 
-                    <!-- Trajectory line stopping right at ground contact (y = 705) -->
-                    <line x1="228" y1="125" x2="228" y2="705" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <!-- Dedicated Textbook Height Indicator (h) Positioned Safely at x = 535 -->
+                        <g id="heightDimensionGroup">
+                            <line id="refLineLowest" x1="100" y1="525" x2="575" y2="525" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3"/>
+                            <text x="582" y="529" font-size="12" font-weight="bold" fill="#64748b">Datum (h=0)</text>
 
-                    <!-- Diagram Markers -->
-                    <g>
-                        <!-- Top Level (h) -->
-                        <line x1="236" y1="125" x2="310" y2="125" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
-                        <polygon points="314,125 306,122 306,128" fill="#dc2626"/>
-                        <text x="325" y="118" font-size="13" font-weight="bold" fill="#0f172a">Ek = 0</text>
-                        <text x="325" y="136" font-size="13" font-weight="bold" fill="#047857">100 % Ep</text>
-                        <text x="470" y="127" font-size="14" font-style="italic" font-weight="bold" fill="#475569">h</text>
+                            <line id="refLineExtreme" x1="460" y1="475" x2="560" y2="475" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="3 3" opacity="0.85"/>
 
-                        <!-- Mid Level (1/2 h) -->
-                        <line x1="236" y1="415" x2="310" y2="415" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
-                        <polygon points="314,415 306,412 306,418" fill="#dc2626"/>
-                        <text x="325" y="408" font-size="13" font-weight="bold" fill="#047857">50 % Ep</text>
-                        <text x="325" y="426" font-size="13" font-weight="bold" fill="#2563eb">50 % Ek</text>
-                        <text x="470" y="417" font-size="13" font-weight="bold" fill="#475569">½ of h</text>
+                            <line id="refHeightArrow" x1="535" y1="479" x2="535" y2="521" stroke="#dc2626" stroke-width="2"/>
+                            <polygon id="refArrowTop" points="535,475 531,484 539,484" fill="#dc2626"/>
+                            <polygon id="refArrowBtm" points="535,525 531,516 539,516" fill="#dc2626"/>
 
-                        <!-- Ground Level (y = 705) -->
-                        <line x1="236" y1="705" x2="310" y2="705" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 2"/>
-                        <polygon points="314,705 306,702 306,708" fill="#dc2626"/>
-                        <text x="325" y="694" font-size="13" font-weight="bold" fill="#2563eb">100 % Ek</text>
-                        <text x="325" y="722" font-size="13" font-weight="bold" fill="#475569">Ep = 0</text>
-                        <text x="470" y="708" font-size="13" font-weight="bold" fill="#475569">h = 0</text>
-                    </g>
+                            <rect id="refHeightBg" x="518" y="489" width="34" height="22" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
+                            <text id="refHeightText" x="535" y="505" font-size="14" font-style="italic" font-weight="extrabold" fill="#b91c1c" text-anchor="middle">h</text>
+                            <text id="refHeightVal" x="535" y="546" font-size="11" font-weight="extrabold" fill="#ea580c" text-anchor="middle">h = 0.47 m</text>
+                        </g>
 
-                    <!-- Draggable Amber Coconut Entity -->
-                    <g id="coconutEntity" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(228, 125)">
-                        <circle cx="0" cy="0" r="13" fill="url(#amberCoconutGrad)" stroke="#7c2d12" stroke-width="1.8"/>
-                        <ellipse cx="-4" cy="-4" rx="3.5" ry="2" fill="#ffffff" opacity="0.6"/>
-                        <circle cx="0" cy="0" r="32" fill="transparent"/>
-                    </g>
-                </svg>
+                        <!-- Active Draggable Pendulum String & Bob -->
+                        <g id="activePendulumGroup">
+                            <line id="activeString" x1="310" y1="85" x2="310" y2="525" stroke="#047857" stroke-width="3" stroke-linecap="round"/>
+                            <g id="activeBob" class="touch-draggable cursor-grab active:cursor-grabbing" transform="translate(310, 525)">
+                                <circle cx="0" cy="0" r="28" fill="#38bdf8" stroke="#0284c7" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.25))"/>
+                                <ellipse cx="-7" cy="-7" rx="8" ry="5" fill="#ffffff" opacity="0.5"/>
+                                <circle cx="0" cy="0" r="42" fill="transparent"/>
+                            </g>
+                        </g>
+                    </svg>
 
-                <!-- SVG Model 2: Simple Pendulum -->
-                <svg id="svgSim2" class="w-full h-full max-h-full hidden" viewBox="0 0 620 700" preserveAspectRatio="xMidYMid meet">
-                    <rect x="70" y="75" width="480" height="14" rx="4" fill="#b4835a"/>
-                    <text x="80" y="65" font-size="14" font-weight="bold" fill="#64748b">Rigid support</text>
-                    <circle cx="310" cy="85" r="4.5" fill="#334155"/>
+                    <!-- ================= MODEL 3: ROLLER COASTER ================= -->
+                    <svg id="svgSim3" class="w-full h-full max-h-[560px] hidden" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <linearGradient id="metalTrackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#475569"/>
+                                <stop offset="50%" stop-color="#94a3b8"/>
+                                <stop offset="100%" stop-color="#334155"/>
+                            </linearGradient>
+                            <linearGradient id="cartGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#dc2626"/>
+                                <stop offset="100%" stop-color="#ef4444"/>
+                            </linearGradient>
+                            <marker id="arrowDark" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                                <path d="M 0 1.5 L 7 4 L 0 6.5 z" fill="#0f172a"/>
+                            </marker>
+                            <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                                <path d="M 0 1.5 L 7 4 L 0 6.5 z" fill="#ea580c"/>
+                            </marker>
+                            <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                                <path d="M 0 1.5 L 7 4 L 0 6.5 z" fill="#2563eb"/>
+                            </marker>
+                        </defs>
 
-                    <path id="trajectoryArc" d="" stroke="#15803d" stroke-width="2" stroke-dasharray="5 4" fill="none"/>
+                        <!-- Ground Base -->
+                        <rect x="0" y="540" width="900" height="80" fill="#f8fafc"/>
+                        <line x1="0" y1="540" x2="900" y2="540" stroke="#334155" stroke-width="2.5"/>
 
-                    <!-- Ghost C -->
-                    <g opacity="0.6">
-                        <line id="stringC" x1="310" y1="85" x2="160" y2="475" stroke="#15803d" stroke-width="1.8" stroke-dasharray="4 4"/>
-                        <circle id="bobC" cx="160" cy="475" r="26" fill="#93c5fd"/>
-                        <text x="90" y="475" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">Point C</text>
-                        <text x="90" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = max</text>
-                        <text x="90" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ek = 0</text>
-                    </g>
+                        <!-- Wooden Trestle Support Scaffold -->
+                        <g id="coasterScaffolding" stroke="#d4a373" stroke-width="1.8" opacity="0.75">
+                            <line x1="80" y1="540" x2="80" y2="480"/>
+                            <line x1="140" y1="540" x2="140" y2="350"/>
+                            <line x1="210" y1="540" x2="210" y2="200"/>
+                            <line x1="280" y1="540" x2="280" y2="140"/>
+                            <line x1="350" y1="540" x2="350" y2="210"/>
+                            <line x1="420" y1="540" x2="420" y2="380"/>
+                            <line x1="500" y1="540" x2="500" y2="538"/>
+                            <line x1="580" y1="540" x2="580" y2="440"/>
+                            <line x1="640" y1="540" x2="640" y2="340"/>
+                            <line x1="680" y1="540" x2="680" y2="320"/>
+                            <line x1="740" y1="540" x2="740" y2="460"/>
+                        </g>
 
-                    <!-- Ghost B -->
-                    <g opacity="0.6">
-                        <line id="stringB" x1="310" y1="85" x2="460" y2="475" stroke="#15803d" stroke-width="1.8" stroke-dasharray="4 4"/>
-                        <circle id="bobB" cx="460" cy="475" r="26" fill="#93c5fd"/>
-                        <text x="530" y="475" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">Point B</text>
-                        <text x="530" y="495" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = max</text>
-                        <text x="530" y="513" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ek = 0</text>
-                    </g>
+                        <!-- Rail Ties -->
+                        <path id="coasterTies" d="" stroke="#64748b" stroke-width="4" stroke-dasharray="2 12" fill="none" opacity="0.6"/>
 
-                    <!-- Center Labels (Point A) -->
-                    <g>
-                        <text x="310" y="630" font-size="15" font-weight="extrabold" fill="#0f172a" text-anchor="middle">Point A (Center)</text>
-                        <text x="310" y="650" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">Ek = max</text>
-                        <text x="310" y="668" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">Ep = 0</text>
-                    </g>
+                        <!-- Dual Rail Path -->
+                        <path id="coasterTrackPath" d="M 20 540 C 110 540, 180 140, 280 140 C 380 140, 420 540, 500 540 C 580 540, 620 320, 680 320 C 730 320, 755 540, 790 540 L 885 540" 
+                              stroke="url(#metalTrackGrad)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path id="coasterTrackInner" d="M 20 540 C 110 540, 180 140, 280 140 C 380 140, 420 540, 500 540 C 580 540, 620 320, 680 320 C 730 320, 755 540, 790 540 L 885 540" 
+                              stroke="#e2e8f0" stroke-width="2" fill="none" stroke-dasharray="6 3" stroke-linecap="round"/>
 
-                    <!-- Live Pendulum -->
-                    <line id="activeString" x1="310" y1="85" x2="310" y2="525" stroke="#047857" stroke-width="2.5"/>
-                    <g id="activeBob" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(310, 525)">
-                        <circle cx="0" cy="0" r="26" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
-                        <circle cx="0" cy="0" r="42" fill="transparent"/>
-                    </g>
-                </svg>
+                        <!-- Height Dimension Line (h) -->
+                        <g>
+                            <line x1="280" y1="145" x2="280" y2="535" stroke="#dc2626" stroke-width="2" stroke-dasharray="4 3"/>
+                            <polygon points="280,140 276,152 284,152" fill="#dc2626"/>
+                            <polygon points="280,540 276,528 284,528" fill="#dc2626"/>
+                            <rect x="264" y="327" width="32" height="26" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
+                            <text x="280" y="345" font-size="16" font-style="italic" font-weight="extrabold" fill="#b91c1c" text-anchor="middle">h</text>
+                        </g>
 
-                <!-- SVG Model 3: Roller Coaster -->
-                <svg id="svgSim3" class="w-full h-full max-h-full hidden" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M 0 1 L 5 3 L 0 5 z" fill="#0f172a"/>
-                        </marker>
-                    </defs>
+                        <!-- Diagram Annotations -->
+                        <g>
+                            <text x="250" y="65" font-size="15" font-weight="extrabold" fill="#ea580c" text-anchor="middle">Ep maximum</text>
+                            <text x="250" y="85" font-size="15" font-weight="extrabold" fill="#0f172a" text-anchor="middle">Ek = 0</text>
+                            <line x1="258" y1="94" x2="276" y2="124" stroke="#0f172a" stroke-width="2" marker-end="url(#arrowDark)"/>
+                        </g>
+                        <g>
+                            <text x="100" y="272" font-size="14" font-weight="extrabold" fill="#ea580c" text-anchor="middle">Ep is</text>
+                            <text x="100" y="290" font-size="14" font-weight="extrabold" fill="#ea580c" text-anchor="middle">increasing</text>
+                            <line x1="130" y1="281" x2="166" y2="281" stroke="#ea580c" stroke-width="2" marker-end="url(#arrowOrange)"/>
+                        </g>
+                        <g>
+                            <text x="475" y="245" font-size="14" font-weight="extrabold" fill="#0f172a" text-anchor="middle">Ep is transferred</text>
+                            <text x="475" y="265" font-size="14" font-weight="extrabold" fill="#0f172a" text-anchor="middle">to Ek</text>
+                            <line x1="450" y1="275" x2="410" y2="346" stroke="#0f172a" stroke-width="2" marker-end="url(#arrowDark)"/>
+                        </g>
+                        <g>
+                            <text x="500" y="580" font-size="15" font-weight="extrabold" fill="#2563eb" text-anchor="middle">Ek maximum</text>
+                            <text x="500" y="598" font-size="15" font-weight="extrabold" fill="#ea580c" text-anchor="middle">Ep = 0</text>
+                            <line x1="500" y1="564" x2="500" y2="542" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowBlue)"/>
+                        </g>
+                        <g>
+                            <text x="635" y="235" font-size="14" font-weight="extrabold" fill="#0f172a" text-anchor="middle">Ek is decreasing</text>
+                            <text x="635" y="253" font-size="14" font-weight="extrabold" fill="#ea580c" text-anchor="middle">And Ep is gaining</text>
+                            <line x1="635" y1="262" x2="636" y2="352" stroke="#0f172a" stroke-width="2" marker-end="url(#arrowDark)"/>
+                        </g>
 
-                    <rect x="0" y="540" width="900" height="80" fill="#f8fafc"/>
-                    <line x1="0" y1="540" x2="900" y2="540" stroke="#334155" stroke-width="2"/>
+                        <!-- Flat Ground Exit Track Badge -->
+                        <g transform="translate(835, 495)">
+                            <rect x="-42" y="-18" width="84" height="34" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.2"/>
+                            <text x="0" y="-3" font-size="11" font-weight="extrabold" fill="#047857" text-anchor="middle">Flat Ground</text>
+                            <text x="0" y="11" font-size="10" font-weight="bold" fill="#2563eb" text-anchor="middle">Slide Track</text>
+                        </g>
+                        <rect x="882" y="522" width="10" height="22" rx="2" fill="#e11d48" stroke="#9f1239" stroke-width="1.5"/>
 
-                    <!-- Scaffolding -->
-                    <g stroke="#fbd38d" stroke-width="1.2" opacity="0.6">
-                        <line x1="140" y1="540" x2="140" y2="350"/><line x1="210" y1="540" x2="210" y2="200"/>
-                        <line x1="280" y1="540" x2="280" y2="140"/><line x1="350" y1="540" x2="350" y2="210"/>
-                        <line x1="420" y1="540" x2="420" y2="380"/><line x1="640" y1="540" x2="640" y2="340"/>
-                        <line x1="680" y1="540" x2="680" y2="320"/>
-                    </g>
+                        <!-- Interactive Roller Coaster Cart -->
+                        <g id="activeCoasterCart" class="touch-draggable cursor-grab active:cursor-grabbing" transform="translate(280, 140)">
+                            <ellipse cx="0" cy="8" rx="22" ry="5" fill="#0f172a" opacity="0.3"/>
+                            <circle cx="-14" cy="5" r="4.5" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+                            <circle cx="14" cy="5" r="4.5" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+                            <path d="M -22 3 L -20 -10 Q -12 -14 0 -14 Q 16 -14 22 -4 L 20 3 Z" fill="url(#cartGrad)" stroke="#991b1b" stroke-width="1.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.2))"/>
+                            <path d="M 12 -4 L 18 2 L 10 2 Z" fill="#93c5fd" opacity="0.8"/>
+                            <circle cx="-7" cy="-14" r="5" fill="#fde047" stroke="#b45309" stroke-width="1"/>
+                            <circle cx="-6" cy="-15" r="1" fill="#1e293b"/>
+                            <circle cx="7" cy="-14" r="5" fill="#fde047" stroke="#b45309" stroke-width="1"/>
+                            <circle cx="8" cy="-15" r="1" fill="#1e293b"/>
+                            <line x1="-15" y1="-7" x2="16" y2="-7" stroke="#cbd5e1" stroke-width="1.8" stroke-linecap="round"/>
+                            <rect x="-35" y="-30" width="70" height="50" fill="transparent"/>
+                        </g>
+                    </svg>
+                </div>
 
-                    <!-- Coaster Track -->
-                    <path id="coasterTrackPath" d="M 20 540 C 110 540, 180 140, 280 140 C 380 140, 420 540, 500 540 C 580 540, 620 320, 680 320 C 730 320, 755 540, 790 540 L 885 540" 
-                          stroke="#475569" stroke-width="5" fill="none" stroke-linecap="round"/>
-
-                    <!-- Height Indicator (h) -->
-                    <line x1="280" y1="145" x2="280" y2="535" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="4 3"/>
-                    <polygon points="280,140 276,152 284,152" fill="#dc2626"/>
-                    <polygon points="280,540 276,528 284,528" fill="#dc2626"/>
-                    <rect x="265" y="328" width="30" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2"/>
-                    <text x="280" y="345" font-size="15" font-style="italic" font-weight="bold" fill="#dc2626" text-anchor="middle">h</text>
-
-                    <!-- Diagram Annotations -->
-                    <g>
-                        <!-- Hill 1 -->
-                        <text x="250" y="70" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep maximum</text>
-                        <text x="250" y="88" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">Ek = 0</text>
-                        <line x1="258" y1="96" x2="276" y2="124" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arr)"/>
-
-                        <!-- Downhill -->
-                        <text x="460" y="250" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">Ep is transferred</text>
-                        <text x="460" y="268" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">to Ek</text>
-                        <line x1="445" y1="275" x2="415" y2="335" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arr)"/>
-
-                        <!-- Valley -->
-                        <text x="500" y="575" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">Ek maximum</text>
-                        <text x="500" y="592" font-size="13" font-weight="bold" fill="#047857" text-anchor="middle">Ep = 0</text>
-
-                        <!-- Flat Ground Indicator -->
-                        <text x="835" y="525" font-size="11" font-weight="bold" fill="#047857" text-anchor="middle">Flat Ground Slide</text>
-                        <rect x="880" y="524" width="8" height="18" rx="2" fill="#e11d48"/>
-                    </g>
-
-                    <!-- Coaster Cart -->
-                    <g id="activeCoasterCart" class="cursor-grab active:cursor-grabbing touch-draggable" transform="translate(280, 140)">
-                        <circle cx="-12" cy="4" r="4" fill="#1e293b"/>
-                        <circle cx="12" cy="4" r="4" fill="#1e293b"/>
-                        <path d="M -18 3 L -16 -8 Q -10 -12 0 -12 Q 12 -12 18 -2 L 16 3 Z" fill="#ef4444"/>
-                        <circle cx="-5" cy="-11" r="3.5" fill="#fde047"/>
-                        <circle cx="5" cy="-11" r="3.5" fill="#fde047"/>
-                        <rect x="-25" y="-20" width="50" height="35" fill="transparent"/>
-                    </g>
-                </svg>
-
-            </div>
-
-            <!-- Playback Bar (Always Visible & Pinned) -->
-            <div class="px-2 sm:px-4 py-1.5 border-t border-emerald-100 flex items-center justify-between gap-1.5 bg-white shrink-0 shadow-xs z-10">
-                <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
-                    <button id="btnPlay" onclick="toggleSimulation()" class="px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-extrabold text-[11px] sm:text-xs shadow-xs flex items-center gap-1.5 transition">
-                        <span id="playIcon">▶</span>
-                        <span id="btnPlayText">Release</span>
-                    </button>
-                    <button onclick="resetSimulation()" class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-[10px] sm:text-xs transition">
-                        ↺ Reset
-                    </button>
-
-                    <!-- Speed Controls -->
-                    <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] sm:text-xs font-semibold">
-                        <button id="btnSpeedNormal" onclick="setSpeed(1.0)" class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs font-bold">
-                            1.0x
+                <!-- Bottom Playback Controls Bar -->
+                <div class="p-2 sm:p-2.5 bg-white/95 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0 z-10 shadow-xs">
+                    <div class="flex items-center gap-2">
+                        <button id="btnPlayPause" onclick="toggleSimulation()" class="px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center gap-1.5 transition">
+                            <svg id="playIcon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                            <span id="btnPlayText">Release Coconut</span>
                         </button>
-                        <button id="btnSpeedSlow" onclick="setSpeed(0.25)" class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs flex items-center gap-0.5">
-                            <span>🐌</span> Slow
+
+                        <button onclick="resetSimulation()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold text-xs sm:text-sm transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Reset
                         </button>
                     </div>
-                </div>
 
-                <div class="text-[10px] sm:text-xs text-slate-500 font-medium shrink-0">
-                    <span class="hidden xs:inline">Time: </span><span id="timeDisplay" class="font-bold text-slate-800 font-mono">0.00 s</span>
+                    <!-- Speed Toggle (Normal vs Slow Motion) -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-semibold">
+                        <span class="text-slate-400 px-1 text-[11px]">Speed:</span>
+                        <button onclick="setSpeed(1.0)" id="spd1" class="px-2 py-0.5 rounded bg-white text-teal-700 shadow-xs font-bold transition">1.0x</button>
+                        <button onclick="setSpeed(0.25)" id="spd025" class="px-2 py-0.5 rounded text-slate-600 hover:bg-white transition flex items-center gap-1">
+                            <span>🐌</span> Slow Mo (0.25x)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Dashboard -->
-        <div id="dashboardCol" class="flex-1 lg:flex-none lg:col-span-5 flex flex-col justify-between gap-2 min-h-0 overflow-y-auto lg:overflow-visible pr-0.5">
+        <!-- Right Side: Energy Dashboard & Point-Form Explanation -->
+        <div class="lg:col-span-5 flex flex-col justify-between gap-3 min-h-0">
             
-            <!-- Live Energy Distribution Card -->
-            <div id="cardEnergy" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-4 shadow-xs shrink-0">
-                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
-                    <span class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <span class="text-teal-600">⚡</span> Live Energy Distribution
+            <!-- Realtime Energy Bars Card -->
+            <div class="glass-panel p-3.5 sm:p-4 rounded-xl shadow-xs">
+                <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-200">
+                    <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Energy Distribution & Conservation
+                    </h2>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">
+                        E<sub>Total</sub> = Constant
                     </span>
-                    <span class="text-[10px] sm:text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                        E<sub>Total</sub> = Malar (Constant)
-                    </span>
                 </div>
 
-                <!-- Potential Energy Meter -->
-                <div class="mb-2">
-                    <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1">
-                        <span class="text-emerald-700 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-600 inline-block"></span>
-                            E<sub>p</sub> = mgh
-                        </span>
-                        <span id="dispEp" class="font-mono text-emerald-800 font-extrabold text-xs sm:text-sm">196.2 J (100%)</span>
+                <!-- Live Energy Meters -->
+                <div class="space-y-3">
+                    <!-- Potential Energy (Ep) in Vivid Amber -->
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="text-xs sm:text-sm font-bold text-amber-800 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block shadow-xs"></span>
+                                Potential Energy (E<sub>p</sub> = <span class="italic">mgh</span>)
+                            </span>
+                            <div class="text-right">
+                                <span id="valEpJoules" class="text-sm sm:text-base font-black font-mono text-amber-600">196.2 J</span>
+                                <span id="valEpPercent" class="text-xs font-bold text-slate-500 ml-1">(100%)</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
+                            <div id="barEp" class="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full energy-bar-transition shadow-xs" style="width: 100%;"></div>
+                        </div>
                     </div>
-                    <div class="w-full h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div id="barEp" class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 energy-bar-fill rounded-full" style="width: 100%;"></div>
-                    </div>
-                </div>
 
-                <!-- Kinetic Energy Meter -->
-                <div class="mb-2">
-                    <div class="flex justify-between items-center text-xs sm:text-sm font-bold mb-1">
-                        <span class="text-blue-700 flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-sm bg-blue-600 inline-block"></span>
-                            E<sub>k</sub> = ½mv²
-                        </span>
-                        <span id="dispEk" class="font-mono text-blue-800 font-extrabold text-xs sm:text-sm">0.0 J (0%)</span>
+                    <!-- Kinetic Energy (Ek) -->
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="text-xs sm:text-sm font-bold text-blue-800 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-blue-600 inline-block shadow-xs"></span>
+                                Kinetic Energy (E<sub>k</sub> = ½<span class="italic">mv</span>²)
+                            </span>
+                            <div class="text-right">
+                                <span id="valEkJoules" class="text-sm sm:text-base font-black font-mono text-blue-700">0.0 J</span>
+                                <span id="valEkPercent" class="text-xs font-bold text-slate-500 ml-1">(0%)</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
+                            <div id="barEk" class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full energy-bar-transition shadow-xs" style="width: 0%;"></div>
+                        </div>
                     </div>
-                    <div class="w-full h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div id="barEk" class="h-full bg-gradient-to-r from-blue-500 to-blue-600 energy-bar-fill rounded-full" style="width: 0%;"></div>
-                    </div>
-                </div>
 
-                <!-- Total Energy Equation & Readout -->
-                <div class="flex justify-between items-center text-xs sm:text-sm font-bold text-slate-700 pt-1 border-t border-slate-100">
-                    <span>E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub></span>
-                    <span id="dispTotal" class="font-mono text-slate-900 font-extrabold text-sm sm:text-base">196.2 J</span>
+                    <!-- Total Energy -->
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="text-xs sm:text-sm font-bold text-purple-800 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-purple-600 inline-block shadow-xs"></span>
+                                Total Energy (E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>)
+                            </span>
+                            <span id="valTotalJoules" class="text-sm sm:text-base font-black font-mono text-purple-800">196.2 J</span>
+                        </div>
+                        <div class="w-full h-3 bg-purple-100 rounded-full overflow-hidden border border-purple-200 shadow-inner">
+                            <div class="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full w-full"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Key Metrics Grid -->
-            <div id="metricsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
-                <!-- Metric 1: Height or Angle -->
-                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex flex-col justify-between items-center shadow-xs text-center">
-                    <p id="labelMetric1" class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Height (h)</p>
-                    <p id="valMetric1" class="text-base sm:text-xl font-black text-slate-900 font-mono my-0.5">10.0 <span class="text-xs font-semibold text-slate-500">m</span></p>
-                    <span id="badgeMetric1" class="text-[9px] sm:text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Top (h)</span>
+            <!-- Real-time Physical Variables Dashboard -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-2.5">
+                <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 text-center shadow-xs flex flex-col justify-between">
+                    <p id="dispMetric1Label" class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Height (y)</p>
+                    <p id="dispMetric1Val" class="text-lg sm:text-xl font-black text-slate-800 font-mono my-0.5">10.0 <span class="text-xs font-semibold text-slate-500">m</span></p>
+                    <span id="dispMetric1Badge" class="text-[11px] text-amber-700 font-bold bg-amber-50 py-0.5 px-1 rounded border border-amber-200 inline-block mx-auto">Top (h)</span>
                 </div>
-
-                <!-- Metric 2: Velocity -->
-                <div class="bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex flex-col justify-between items-center shadow-xs text-center">
-                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Velocity (v)</p>
-                    <p id="valVelocity" class="text-base sm:text-xl font-black text-blue-600 font-mono my-0.5">0.00 <span class="text-xs font-semibold text-slate-500">m/s</span></p>
-                    <span class="text-[9px] sm:text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 font-mono">v = √(2Ek/m)</span>
+                <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 text-center shadow-xs flex flex-col justify-between">
+                    <p class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Velocity (v)</p>
+                    <p id="dispVelocity" class="text-lg sm:text-xl font-black text-blue-600 font-mono my-0.5">0.00 <span class="text-xs font-semibold text-slate-500">m/s</span></p>
+                    <span id="dispVelocityFormula" class="text-[11px] text-slate-500 font-bold bg-slate-50 py-0.5 px-1 rounded border border-slate-200 inline-block mx-auto font-mono">v = √(2·ΔEp/m)</span>
                 </div>
-
-                <!-- Metric 3: Gravity -->
-                <div id="pcMetric3" class="flex bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex-col justify-between items-center shadow-xs text-center">
-                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Gravity (g)</p>
-                    <p class="text-base sm:text-xl font-black text-emerald-700 font-mono my-0.5">9.81 <span class="text-xs font-semibold text-slate-500">m/s²</span></p>
-                    <span class="text-[9px] sm:text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 font-mono">Earth (Std)</span>
-                </div>
-
-                <!-- Metric 4: Momentum -->
-                <div id="pcMetric4" class="flex bg-white/95 rounded-xl border border-emerald-200/80 p-2 sm:p-2.5 flex-col justify-between items-center shadow-xs text-center">
-                    <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">Momentum (p)</p>
-                    <p id="valMomentum" class="text-base sm:text-xl font-black text-purple-700 font-mono my-0.5">0.0 <span class="text-xs font-semibold text-slate-500">kg·m/s</span></p>
-                    <span class="text-[9px] sm:text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-mono">p = m·v</span>
+                <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 text-center shadow-xs flex flex-col justify-between">
+                    <p id="dispMetric3Label" class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Gravity (g)</p>
+                    <p id="dispMetric3Val" class="text-lg sm:text-xl font-black text-teal-700 font-mono my-0.5">9.81 <span class="text-xs font-semibold text-slate-500">m/s²</span></p>
+                    <span id="dispMetric3Badge" class="text-[11px] text-slate-600 font-bold bg-slate-50 py-0.5 px-1 rounded border border-slate-200 inline-block mx-auto">Earth (Std)</span>
                 </div>
             </div>
 
-            <!-- Parameters Adjuster Card -->
-            <div id="cardParams" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-3.5 shadow-xs shrink-0">
-                <div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 mb-2 flex items-center justify-between">
-                    <span>Pelaras Parameter</span>
-                    <span class="text-[10px] sm:text-xs font-semibold text-slate-500">Ubah nilai masa nyata</span>
+            <!-- Parameters Adjustment Card -->
+            <div class="glass-panel p-3.5 sm:p-4 rounded-xl shadow-xs space-y-2.5">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                    <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        Adjustable Parameters
+                    </h2>
+                    <span class="text-xs font-mono text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-bold">g = 9.81 m/s²</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
+                <div class="grid grid-cols-2 gap-3 pt-0.5">
                     <!-- Slider 1 -->
                     <div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm font-semibold mb-1">
-                            <span id="param1Label" class="text-slate-700 truncate">Height (h)</span>
-                            <span id="param1Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-xs">10.0 m</span>
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-700 mb-1">
+                            <label id="param1Label" for="inputParam1">Tree Height (h)</label>
+                            <span id="param1Badge" class="font-mono text-teal-800 bg-teal-100/70 px-1.5 py-0.5 rounded font-extrabold text-[11px] border border-teal-300">10.0 m</span>
                         </div>
-                        <input id="inputParam1" type="range" min="5" max="25" step="0.5" value="10" 
-                               class="w-full h-1.5 sm:h-2 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam1(this.value)">
+                        <input type="range" id="inputParam1" min="5" max="25" step="0.5" value="10" 
+                               class="w-full h-2 bg-slate-200 rounded-lg cursor-pointer accent-teal-600" oninput="onParam1Change(this.value)">
+                        <div id="param1MinMax" class="flex justify-between text-[10px] font-semibold text-slate-400 mt-0.5">
+                            <span>5 m</span>
+                            <span>25 m</span>
+                        </div>
                     </div>
 
                     <!-- Slider 2 -->
                     <div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm font-semibold mb-1">
-                            <span id="param2Label" class="text-slate-700 truncate">Mass (m)</span>
-                            <span id="param2Val" class="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 text-xs">2.0 kg</span>
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-700 mb-1">
+                            <label id="param2Label" for="inputParam2">Coconut Mass (m)</label>
+                            <span id="param2Badge" class="font-mono text-teal-800 bg-teal-100/70 px-1.5 py-0.5 rounded font-extrabold text-[11px] border border-teal-300">2.0 kg</span>
                         </div>
-                        <input id="inputParam2" type="range" min="0.5" max="5.0" step="0.1" value="2.0" 
-                               class="w-full h-1.5 sm:h-2 bg-slate-200 rounded-lg cursor-pointer" oninput="onParam2(this.value)">
+                        <input type="range" id="inputParam2" min="0.5" max="5.0" step="0.1" value="2.0" 
+                               class="w-full h-2 bg-slate-200 rounded-lg cursor-pointer accent-teal-600" oninput="onParam2Change(this.value)">
+                        <div class="flex justify-between text-[10px] font-semibold text-slate-400 mt-0.5">
+                            <span>0.5 kg</span>
+                            <span>5.0 kg</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Scientific Principles Card -->
-            <div id="cardConcept" class="bg-white/95 rounded-xl border border-emerald-200/80 p-2.5 sm:p-3 text-xs sm:text-sm shadow-xs text-slate-700 leading-relaxed shrink-0 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="font-extrabold text-teal-800 flex items-center gap-1">
-                            <span>📘</span> Prinsip Fizik:
+            <!-- Conceptual Explanation Box in Clean Bullet Points -->
+            <div id="explanationCard" class="bg-white/95 border border-emerald-200 rounded-xl p-3 sm:p-3.5 text-xs text-slate-800 leading-snug shadow-xs">
+                <div class="flex items-center justify-between border-b border-emerald-100 pb-2 mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-md bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
+                            📘
                         </span>
-                        <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            Fizik Kejuruteraan
-                        </span>
+                        <h3 class="font-extrabold text-xs text-slate-900 uppercase tracking-wider">
+                            Principle of Conservation of Energy (Konsep Fizik)
+                        </h3>
                     </div>
-                    <p id="conceptText" class="font-normal text-slate-600 text-xs sm:text-sm">
-                        Tenaga tidak boleh dicipta atau dimusnahkan. Jumlah tenaga mekanik sentiasa malar: E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub>.
-                    </p>
                 </div>
 
-                <!-- Educational Formula Strip -->
-                <div id="pcFormulaStrip" class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 text-center text-xs font-semibold">
-                    <div class="bg-emerald-50/70 p-1.5 rounded-lg border border-emerald-200/60">
-                        <span class="text-emerald-800 font-bold block text-[11px]">E<sub>p</sub> = mgh</span>
-                        <span class="text-slate-500 text-[10px]">Tenaga Keupayaan</span>
-                    </div>
-                    <div class="bg-blue-50/70 p-1.5 rounded-lg border border-blue-200/60">
-                        <span class="text-blue-800 font-bold block text-[11px]">E<sub>k</sub> = ½mv²</span>
-                        <span class="text-slate-500 text-[10px]">Tenaga Kinetik</span>
-                    </div>
-                    <div class="bg-teal-50/70 p-1.5 rounded-lg border border-teal-200/60">
-                        <span class="text-teal-800 font-bold block text-[11px]">E<sub>Total</sub> = Tetap</span>
-                        <span class="text-slate-500 text-[10px]">Keabadian Tenaga</span>
-                    </div>
+                <!-- Point-Form Explanation List -->
+                <div id="pointFormContainer" class="space-y-1.5">
+                    <!-- Injected dynamically via updateInfoCard() -->
                 </div>
             </div>
-
         </div>
     </main>
 
-    <!-- Clean Bright Centered Footer -->
-    <footer class="w-full max-w-7xl mx-auto bg-white/95 backdrop-blur border border-emerald-200/80 rounded-lg px-3 sm:px-4 py-1.5 flex flex-col items-center justify-center text-center shadow-xs shrink-0 gap-0.5">
-        <p class="text-[10px] sm:text-xs text-slate-700 font-bold tracking-wide">
-            &copy; 2026 Mohd Saiful bin Pahrudin | Unit Sains JMSK, Politeknik Port Dickson
-        </p>
-        <p class="text-[9px] sm:text-[11px] text-slate-500 font-medium tracking-wider">
-            All Rights Reserved &bull; For Educational Use Only
-        </p>
+    <footer class="shrink-0 px-2.5 sm:px-4 py-2.5 w-full max-w-7xl mx-auto z-20">
+        <div class="glass-panel bg-white/95 border border-emerald-200/90 rounded-xl px-4 py-2 flex flex-col items-center justify-center text-center shadow-xs">
+            <span class="font-black text-xs sm:text-sm text-slate-900 tracking-wider">MOHDSAIFULPAHRUDIN</span>
+            <span class="text-[11px] font-semibold text-slate-500 mt-0.5">© 2026 Politeknik Port Dickson • All Rights Reserved</span>
+        </div>
     </footer>
 
-    <!-- Core Physics & Unified Script -->
     <script>
-        const G = 9.81;
+        const GRAVITY_EARTH = 9.81;
+
+        // Model 1 (Coconut Fall)
+        const SIM1_Y_TOP = 125;
+        const SIM1_Y_GROUND = 705;
+        const SIM1_COCONUT_R = 13;
+        const SIM1_Y_GROUND_STOP = SIM1_Y_GROUND - SIM1_COCONUT_R; // 692
+        const SIM1_PIXEL_HEIGHT = SIM1_Y_GROUND_STOP - SIM1_Y_TOP; // 567 px
+
+        // Model 2 (Pendulum)
+        const SIM2_PIVOT_X = 310;
+        const SIM2_PIVOT_Y = 85;
+        const SIM2_STRING_PIXELS = 440;
+        const SIM2_PHYSICAL_L = 2.0;
+
+        // Model 3 (Roller Coaster)
+        const SIM3_Y_GROUND = 540;
+        const SIM3_Y_PEAK = 140;
+        const SIM3_PIXEL_DROP = SIM3_Y_GROUND - SIM3_Y_PEAK; // 400 px
 
         const state = {
-            viewMode: 'pc',
             activeSim: 1,
+            speedMultiplier: 1.0,
             isRunning: false,
             isDragging: false,
-            timeScale: 1.0,
-            lastTime: null,
-            animId: null,
+            lastTimestamp: null,
+            animFrameId: null,
 
-            sim1: { hTotal: 10.0, currentY: 10.0, v: 0.0, mass: 2.0, time: 0.0 },
-            sim2: { thetaMax: 40 * Math.PI / 180, theta: -40 * Math.PI / 180, omega: 0.0, mass: 2.0, time: 0.0 },
-            sim3: { hTotal: 45.0, trackDist: 0.0, mass: 400.0, time: 0.0 }
+            sim1: {
+                totalHeightMeters: 10.0,
+                currentYPosMeters: 10.0,
+                velocity: 0.0,
+                mass: 2.0,
+                timeElapsed: 0.0
+            },
+            sim2: {
+                thetaMaxDeg: 40.0,
+                theta: -40.0 * (Math.PI / 180),
+                omega: 0.0,
+                mass: 2.0,
+                timeElapsed: 0.0
+            },
+            sim3: {
+                initialHeightMeters: 45.0,
+                trackDist: 0.0,
+                velocity: 0.0,
+                mass: 400.0,
+                timeElapsed: 0.0
+            }
         };
 
-        // DOM elements cache
-        const appBody = document.getElementById('appBody');
-        const mainWorkspace = document.getElementById('mainWorkspace');
-        const btnViewPC = document.getElementById('btnViewPC');
-        const btnViewMobile = document.getElementById('btnViewMobile');
-
-        const simCanvasCol = document.getElementById('simCanvasCol');
-        const dashboardCol = document.getElementById('dashboardCol');
-        const pcMetric3 = document.getElementById('pcMetric3');
-        const pcMetric4 = document.getElementById('pcMetric4');
-        const pcFormulaStrip = document.getElementById('pcFormulaStrip');
-
-        const subTitle = document.getElementById('subTitle');
-        const statusText = document.getElementById('statusText');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const quickJumps = document.getElementById('quickJumps');
-        const btnPlayText = document.getElementById('btnPlayText');
-        const playIcon = document.getElementById('playIcon');
-
-        const btnSpeedNormal = document.getElementById('btnSpeedNormal');
-        const btnSpeedSlow = document.getElementById('btnSpeedSlow');
-
+        // Cache DOM elements
+        const headerSubtitle = document.getElementById('headerSubtitle');
+        const tabBtn1 = document.getElementById('tabBtn1');
+        const tabBtn2 = document.getElementById('tabBtn2');
+        const tabBtn3 = document.getElementById('tabBtn3');
+        const quickJumpContainer = document.getElementById('quickJumpContainer');
         const svgSim1 = document.getElementById('svgSim1');
         const svgSim2 = document.getElementById('svgSim2');
         const svgSim3 = document.getElementById('svgSim3');
 
+        const simStateLabel = document.getElementById('simStateLabel');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const dragHint = document.getElementById('dragHint');
+        const dragHintText = document.getElementById('dragHintText');
+        const btnPlayText = document.getElementById('btnPlayText');
+        const playIcon = document.getElementById('playIcon');
+
+        const valEpJoules = document.getElementById('valEpJoules');
+        const valEpPercent = document.getElementById('valEpPercent');
+        const barEp = document.getElementById('barEp');
+        const valEkJoules = document.getElementById('valEkJoules');
+        const valEkPercent = document.getElementById('valEkPercent');
+        const barEk = document.getElementById('barEk');
+        const valTotalJoules = document.getElementById('valTotalJoules');
+
+        const dispMetric1Label = document.getElementById('dispMetric1Label');
+        const dispMetric1Val = document.getElementById('dispMetric1Val');
+        const dispMetric1Badge = document.getElementById('dispMetric1Badge');
+        const dispVelocity = document.getElementById('dispVelocity');
+        const dispVelocityFormula = document.getElementById('dispVelocityFormula');
+        const dispMetric3Label = document.getElementById('dispMetric3Label');
+        const dispMetric3Val = document.getElementById('dispMetric3Val');
+        const dispMetric3Badge = document.getElementById('dispMetric3Badge');
+
+        const param1Label = document.getElementById('param1Label');
+        const param1Badge = document.getElementById('param1Badge');
+        const inputParam1 = document.getElementById('inputParam1');
+        const param1MinMax = document.getElementById('param1MinMax');
+        const param2Label = document.getElementById('param2Label');
+        const param2Badge = document.getElementById('param2Badge');
+        const inputParam2 = document.getElementById('inputParam2');
+        const pointFormContainer = document.getElementById('pointFormContainer');
+
+        // Sim 1 elements
         const coconutEntity = document.getElementById('coconutEntity');
+        const coconutHLine = document.getElementById('coconutHLine');
+
+        // Sim 2 elements
         const activeString = document.getElementById('activeString');
         const activeBob = document.getElementById('activeBob');
         const trajectoryArc = document.getElementById('trajectoryArc');
+        const arrowLeft = document.getElementById('arrowLeft');
+        const arrowRight = document.getElementById('arrowRight');
+        const stringC = document.getElementById('stringC');
+        const bobC = document.getElementById('bobC');
+        const stringB = document.getElementById('stringB');
+        const bobB = document.getElementById('bobB');
+
+        const refLineLowest = document.getElementById('refLineLowest');
+        const refLineExtreme = document.getElementById('refLineExtreme');
+        const refHeightArrow = document.getElementById('refHeightArrow');
+        const refArrowTop = document.getElementById('refArrowTop');
+        const refArrowBtm = document.getElementById('refArrowBtm');
+        const refHeightBg = document.getElementById('refHeightBg');
+        const refHeightText = document.getElementById('refHeightText');
+        const refHeightVal = document.getElementById('refHeightVal');
+
+        // Sim 3 elements
         const coasterTrackPath = document.getElementById('coasterTrackPath');
+        const coasterTies = document.getElementById('coasterTies');
         const activeCoasterCart = document.getElementById('activeCoasterCart');
-        let coasterLen = 0;
+        let coasterTotalLength = 0;
 
-        const dispEp = document.getElementById('dispEp');
-        const barEp = document.getElementById('barEp');
-        const dispEk = document.getElementById('dispEk');
-        const barEk = document.getElementById('barEk');
-        const dispTotal = document.getElementById('dispTotal');
-
-        const labelMetric1 = document.getElementById('labelMetric1');
-        const valMetric1 = document.getElementById('valMetric1');
-        const badgeMetric1 = document.getElementById('badgeMetric1');
-        const valVelocity = document.getElementById('valVelocity');
-        const valMomentum = document.getElementById('valMomentum');
-
-        const param1Label = document.getElementById('param1Label');
-        const param1Val = document.getElementById('param1Val');
-        const inputParam1 = document.getElementById('inputParam1');
-        const param2Label = document.getElementById('param2Label');
-        const param2Val = document.getElementById('param2Val');
-        const inputParam2 = document.getElementById('inputParam2');
-        const conceptText = document.getElementById('conceptText');
-
-        // View Mode Switcher
-        function setViewMode(mode) {
-            state.viewMode = mode;
-            if (mode === 'pc') {
-                btnViewPC.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold";
-                btnViewMobile.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold";
-                
-                mainWorkspace.classList.remove('mode-mobile-container');
-                simCanvasCol.className = "flex-[1.5] lg:flex-none lg:col-span-7 bg-white/95 rounded-xl border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-[340px] sm:min-h-[400px]";
-                dashboardCol.className = "flex-1 lg:flex-none lg:col-span-5 flex flex-col justify-between gap-2 min-h-0 overflow-y-auto lg:overflow-visible pr-0.5";
-                
-                if (pcMetric3) pcMetric3.classList.remove('hidden');
-                if (pcMetric4) pcMetric4.classList.remove('hidden');
-                if (pcFormulaStrip) pcFormulaStrip.classList.remove('hidden');
-            } else {
-                btnViewPC.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-teal-800 hover:text-teal-950 transition flex items-center gap-1 font-semibold";
-                btnViewMobile.className = "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition flex items-center gap-1 font-bold";
-                
-                mainWorkspace.classList.add('mode-mobile-container');
-                simCanvasCol.className = "flex-none sm:flex-[1.4] bg-white/95 rounded-lg border border-emerald-200/80 shadow-xs flex flex-col overflow-hidden min-h-0";
-                dashboardCol.className = "flex-1 flex flex-col justify-between gap-1.5 min-h-0";
-                
-                if (pcMetric3) pcMetric3.classList.add('hidden');
-                if (pcMetric4) pcMetric4.classList.add('hidden');
-                if (pcFormulaStrip) pcFormulaStrip.classList.add('hidden');
-            }
-            updateUI();
-        }
-
-        // Speed adjustment
-        function setSpeed(speed) {
-            state.timeScale = speed;
-            if (speed === 1.0) {
-                btnSpeedNormal.className = "px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs";
-                btnSpeedSlow.className = "px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs flex items-center gap-1";
-            } else {
-                btnSpeedNormal.className = "px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900 transition text-[10px] sm:text-xs";
-                btnSpeedSlow.className = "px-2 py-0.5 sm:py-1 rounded bg-teal-700 text-white shadow-xs transition text-[10px] sm:text-xs flex items-center gap-1";
-            }
-        }
-
-        // Switch simulator models
-        function switchSimulator(id) {
-            if (state.animId) cancelAnimationFrame(state.animId);
+        function switchSimulator(simId) {
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
             state.isRunning = false;
             state.isDragging = false;
-            state.activeSim = id;
+            state.lastTimestamp = null;
+            state.activeSim = simId;
 
-            [1, 2, 3].forEach(n => {
-                const btn = document.getElementById(`tab${n}`);
-                if (btn) {
-                    if (n === id) {
-                        btn.className = "px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-teal-700 text-white shadow-xs transition text-center";
-                    } else {
-                        btn.className = "px-2 sm:px-3 py-0.5 sm:py-1 rounded-md text-slate-600 hover:text-slate-900 transition text-center";
-                    }
-                }
-            });
-
-            if (id === 1) {
+            if (simId === 1) {
+                tabBtn1.className = "tab-btn active px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn2.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn3.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
                 svgSim1.classList.remove('hidden');
                 svgSim2.classList.add('hidden');
                 svgSim3.classList.add('hidden');
-                subTitle.textContent = "Model 1: Free-Falling Coconut";
-                conceptText.innerHTML = "Jatuhan bebas: Tenaga keupayaan graviti (E<sub>p</sub> = mgh) bertukar sepenuhnya ke tenaga kinetik (E<sub>k</sub> = ½mv²). Jumlah tenaga mekanik kekal malar sepanjang lintasan.";
+                headerSubtitle.textContent = "Model 1: Free-Falling Coconut";
 
-                param1Label.textContent = "Tree Height (h)";
-                inputParam1.min = "5"; inputParam1.max = "25"; inputParam1.step = "0.5";
-                inputParam1.value = state.sim1.hTotal;
-                param1Val.textContent = `${state.sim1.hTotal.toFixed(1)} m`;
+                param1Label.innerHTML = "Tree Height (h)";
+                inputParam1.min = "5";
+                inputParam1.max = "25";
+                inputParam1.step = "0.5";
+                inputParam1.value = state.sim1.totalHeightMeters;
+                param1Badge.textContent = `${state.sim1.totalHeightMeters.toFixed(1)} m`;
+                param1MinMax.innerHTML = "<span>5 m</span><span>25 m</span>";
 
-                param2Label.textContent = "Coconut Mass (m)";
-                inputParam2.min = "0.5"; inputParam2.max = "5.0"; inputParam2.step = "0.1";
+                param2Label.innerHTML = "Coconut Mass (m)";
+                inputParam2.min = "0.5";
+                inputParam2.max = "5.0";
+                inputParam2.step = "0.1";
                 inputParam2.value = state.sim1.mass;
-                param2Val.textContent = `${state.sim1.mass.toFixed(1)} kg`;
+                param2Badge.textContent = `${state.sim1.mass.toFixed(1)} kg`;
 
-                quickJumps.innerHTML = `
-                    <button onclick="jumpSim1('top')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Top</button>
-                    <button onclick="jumpSim1('mid')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">½ h</button>
-                    <button onclick="jumpSim1('ground')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Ground</button>
+                dragHintText.textContent = "💡 Drag the coconut vertically or click 'Release'";
+                btnPlayText.textContent = "Release Coconut";
+
+                quickJumpContainer.innerHTML = `
+                    <button onclick="jumpSim1('top')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Top (h)
+                    </button>
+                    <button onclick="jumpSim1('mid')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> ½ of h
+                    </button>
+                    <button onclick="jumpSim1('ground')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Ground (h=0)
+                    </button>
                 `;
-            } else if (id === 2) {
+
+                updateInfoCard();
+                resetSimulation();
+            } else if (simId === 2) {
+                tabBtn1.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn2.className = "tab-btn active px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn3.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
                 svgSim1.classList.add('hidden');
                 svgSim2.classList.remove('hidden');
                 svgSim3.classList.add('hidden');
-                subTitle.textContent = "Model 2: Simple Pendulum";
-                conceptText.innerHTML = "Ayunan bandul: Titik ekstrem C & B mempunyai halaju sifar dan E<sub>p</sub> maksimum. Pada titik tengah A, kedudukan terendah menghasilkan E<sub>k</sub> maksimum.";
+                headerSubtitle.textContent = "Model 2: Simple Pendulum Oscillation";
 
-                param1Label.textContent = "Max Angle (θ)";
-                inputParam1.min = "15"; inputParam1.max = "65"; inputParam1.step = "1";
-                const deg = Math.round(state.sim2.thetaMax * 180 / Math.PI);
-                inputParam1.value = deg;
-                param1Val.textContent = `${deg}°`;
+                param1Label.innerHTML = "Release Angle (θ<sub>max</sub>)";
+                inputParam1.min = "15";
+                inputParam1.max = "60";
+                inputParam1.step = "1";
+                inputParam1.value = state.sim2.thetaMaxDeg;
+                param1Badge.textContent = `${state.sim2.thetaMaxDeg}°`;
+                param1MinMax.innerHTML = "<span>15° (Small)</span><span>60° (Large)</span>";
 
-                param2Label.textContent = "Bob Mass (m)";
-                inputParam2.min = "0.5"; inputParam2.max = "5.0"; inputParam2.step = "0.1";
+                param2Label.innerHTML = "Bob Mass (m)";
+                inputParam2.min = "0.5";
+                inputParam2.max = "5.0";
+                inputParam2.step = "0.1";
                 inputParam2.value = state.sim2.mass;
-                param2Val.textContent = `${state.sim2.mass.toFixed(1)} kg`;
+                param2Badge.textContent = `${state.sim2.mass.toFixed(1)} kg`;
 
-                quickJumps.innerHTML = `
-                    <button onclick="jumpSim2('C')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt C</button>
-                    <button onclick="jumpSim2('A')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt A</button>
-                    <button onclick="jumpSim2('B')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Pt B</button>
+                dragHintText.textContent = "💡 Drag the bob sideways or click 'Release'";
+                btnPlayText.textContent = "Release Pendulum";
+
+                quickJumpContainer.innerHTML = `
+                    <button onclick="jumpSim2('C')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Point C
+                    </button>
+                    <button onclick="jumpSim2('A')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Point A
+                    </button>
+                    <button onclick="jumpSim2('B')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Point B
+                    </button>
                 `;
-            } else if (id === 3) {
+
+                updateInfoCard();
+                resetSimulation();
+            } else if (simId === 3) {
+                tabBtn1.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn2.className = "tab-btn px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
+                tabBtn3.className = "tab-btn active px-3 py-1.5 rounded-lg transition flex items-center gap-1.5";
                 svgSim1.classList.add('hidden');
                 svgSim2.classList.add('hidden');
                 svgSim3.classList.remove('hidden');
-                subTitle.textContent = "Model 3: Roller Coaster & Slide Track";
-                conceptText.innerHTML = "Coaster: Puncak 1 (E<sub>p</sub> maks) menukar tenaga kepada E<sub>k</sub> di lembah, mendaki bukit 2, dan meluncur di atas tanah mendatar di mana h = 0 dan E<sub>p</sub> = 0.";
+                headerSubtitle.textContent = "Model 3: Roller Coaster Conversion & Flat Ground Slide";
 
-                param1Label.textContent = "Hill 1 Height (h)";
-                inputParam1.min = "25"; inputParam1.max = "60"; inputParam1.step = "1";
-                inputParam1.value = state.sim3.hTotal;
-                param1Val.textContent = `${state.sim3.hTotal.toFixed(0)} m`;
+                param1Label.innerHTML = "Hill 1 Height (h)";
+                inputParam1.min = "25";
+                inputParam1.max = "60";
+                inputParam1.step = "1";
+                inputParam1.value = state.sim3.initialHeightMeters;
+                param1Badge.textContent = `${state.sim3.initialHeightMeters.toFixed(1)} m`;
+                param1MinMax.innerHTML = "<span>25 m</span><span>60 m</span>";
 
-                param2Label.textContent = "Cart Mass (m)";
-                inputParam2.min = "100"; inputParam2.max = "1000"; inputParam2.step = "50";
+                param2Label.innerHTML = "Cart Mass (m)";
+                inputParam2.min = "100";
+                inputParam2.max = "1000";
+                inputParam2.step = "50";
                 inputParam2.value = state.sim3.mass;
-                param2Val.textContent = `${state.sim3.mass.toFixed(0)} kg`;
+                param2Badge.textContent = `${state.sim3.mass.toFixed(0)} kg`;
 
-                quickJumps.innerHTML = `
-                    <button onclick="jumpSim3('peak')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Peak</button>
-                    <button onclick="jumpSim3('valley')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Valley</button>
-                    <button onclick="jumpSim3('flat')" class="px-2 py-0.5 sm:py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] sm:text-[11px] font-bold">Flat</button>
+                dragHintText.textContent = "💡 Drag the cart along the track or click 'Release'";
+                btnPlayText.textContent = "Release Cart";
+
+                quickJumpContainer.innerHTML = `
+                    <button onclick="jumpSim3('peak')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Hill 1
+                    </button>
+                    <button onclick="jumpSim3('valley')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Valley
+                    </button>
+                    <button onclick="jumpSim3('hill2')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-teal-500"></span> Hill 2
+                    </button>
+                    <button onclick="jumpSim3('flat')" class="px-2 py-1 rounded-md hover:bg-white text-slate-700 transition text-[11px] flex items-center gap-1 font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Flat Ground
+                    </button>
                 `;
 
-                if (!coasterLen && coasterTrackPath.getTotalLength) {
-                    coasterLen = coasterTrackPath.getTotalLength();
+                if (!coasterTotalLength && coasterTrackPath.getTotalLength) {
+                    coasterTotalLength = coasterTrackPath.getTotalLength();
+                    coasterTies.setAttribute('d', coasterTrackPath.getAttribute('d'));
                 }
-            }
 
-            resetSimulation();
+                updateInfoCard();
+                resetSimulation();
+            }
         }
 
-        // Calculations and UI Synchronization
+        function updateInfoCard() {
+            if (state.activeSim === 1) {
+                pointFormContainer.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <span class="text-teal-600 font-bold">•</span>
+                        <p><strong>Prinsip Keabadian Tenaga:</strong> Tenaga tidak boleh dicipta atau dimusnahkan, tetapi bertukar bentuk secara berterusan dengan <span class="text-purple-800 font-bold">E<sub>Total</sub> = E<sub>p</sub> + E<sub>k</sub></span> malar.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-amber-600 font-bold">•</span>
+                        <p><strong>Puncak Pokok Kelapa (h):</strong> Halaju sifar (<span class="text-slate-700 font-bold">v = 0</span>), Tenaga Kinetik <span class="text-slate-700 font-bold">E<sub>k</sub> = 0</span>, dan Tenaga Keupayaan Graviti berada pada nilai maksimum (<span class="text-amber-600 font-bold">100% E<sub>p</sub></span>).</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">•</span>
+                        <p><strong>Semasa Jatuh Bebas:</strong> Ketinggian berkurang menyebabkan <span class="text-amber-600 font-bold">E<sub>p</sub> berkurang</span>, manakala kelajuan bertambah menukarkan tenaga tersebut kepada <span class="text-blue-600 font-bold">E<sub>k</sub> yang meningkat</span>.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-indigo-600 font-bold">•</span>
+                        <p><strong>Tepat Pada Paras Tanah (h = 0):</strong> Semua <span class="text-amber-600 font-bold">E<sub>p</sub> = 0</span> dan telah ditukarkan sepenuhnya kepada Tenaga Kinetik maksimum (<span class="text-blue-600 font-bold">100% E<sub>k</sub></span>) dengan halaju maksimum <span class="font-mono text-blue-700">v = √(2gh)</span>.</p>
+                    </div>
+                `;
+            } else if (state.activeSim === 2) {
+                pointFormContainer.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <span class="text-teal-600 font-bold">•</span>
+                        <p><strong>Ayunan Berulang-Alik:</strong> Tenaga mekanikal sentiasa dikekalkan malar tanpa kehilangan tenaga (mengabaikan rintangan udara).</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-amber-600 font-bold">•</span>
+                        <p><strong>Titik Ekstrem (C & B):</strong> Bebola berhenti seketika pada kedudukan tertinggi (<span class="text-slate-700 font-bold">v = 0, E<sub>k</sub> = 0</span>), menjadikan <span class="text-amber-600 font-bold">E<sub>p</sub> berada pada tahap maksimum</span>.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">•</span>
+                        <p><strong>Titik Keseimbangan (A):</strong> Bebola berada pada aras terendah (<span class="text-slate-700 font-bold">h = 0, E<sub>p</sub> = 0</span>), di mana kelajuan hayunan adalah paling tinggi dengan <span class="text-blue-600 font-bold">E<sub>k</sub> maksimum</span>.</p>
+                    </div>
+                `;
+            } else if (state.activeSim === 3) {
+                pointFormContainer.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <span class="text-teal-600 font-bold">•</span>
+                        <p><strong>Pertukaran Dua Hala:</strong> Gerabak menukar <span class="text-amber-600 font-bold">E<sub>p</sub></span> kepada <span class="text-blue-600 font-bold">E<sub>k</sub></span> semasa menuruni cerun, dan sebaliknya semasa mendaki bukit 2.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-blue-600 font-bold">•</span>
+                        <p><strong>Dasar Lembah:</strong> Halaju gerabak adalah paling tinggi dengan <span class="text-blue-600 font-bold">E<sub>k</sub> maksimum</span> dan <span class="text-amber-600 font-bold">E<sub>p</sub> = 0</span>.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="text-indigo-600 font-bold">•</span>
+                        <p><strong>Trek Rata Tanah (Flat Ground):</strong> Pada aras <span class="text-slate-700 font-bold">h = 0</span>, tiada lagi tenaga keupayaan (<span class="text-amber-600 font-bold">E<sub>p</sub> = 0</span>). Gerabak meluncur dengan <span class="text-blue-600 font-bold">100% E<sub>k</sub></span> sebelum berhenti secara selamat di penghujung penampan hidraulik.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function computeSim1() {
+            const hTotal = state.sim1.totalHeightMeters;
+            const hCurrent = Math.max(0, Math.min(hTotal, state.sim1.currentYPosMeters));
+            const m = state.sim1.mass;
+            const totalEnergy = m * GRAVITY_EARTH * hTotal;
+            const Ep = m * GRAVITY_EARTH * hCurrent;
+            const Ek = Math.max(0, totalEnergy - Ep);
+            const speed = Math.abs(state.sim1.velocity);
+
+            const epPercent = totalEnergy > 0 ? Math.min(100, Math.max(0, Math.round((Ep / totalEnergy) * 100))) : 0;
+            const ekPercent = 100 - epPercent;
+
+            return { hTotal, hCurrent, totalEnergy, Ep, Ek, speed, epPercent, ekPercent };
+        }
+
+        function computeSim2() {
+            const thetaMaxRad = state.sim2.thetaMaxDeg * (Math.PI / 180);
+            const hMax = SIM2_PHYSICAL_L * (1 - Math.cos(thetaMaxRad));
+            const m = state.sim2.mass;
+            const totalEnergy = m * GRAVITY_EARTH * hMax;
+
+            const currentH = Math.max(0, SIM2_PHYSICAL_L * (1 - Math.cos(state.sim2.theta)));
+            const Ep = m * GRAVITY_EARTH * currentH;
+            const Ek = Math.max(0, totalEnergy - Ep);
+            const speed = Math.sqrt((2 * Ek) / m);
+
+            const epPercent = totalEnergy > 0 ? Math.min(100, Math.max(0, Math.round((Ep / totalEnergy) * 100))) : 0;
+            const ekPercent = 100 - epPercent;
+
+            return { hMax, currentH, totalEnergy, Ep, Ek, speed, epPercent, ekPercent };
+        }
+
+        function computeSim3() {
+            if (!coasterTotalLength && coasterTrackPath.getTotalLength) {
+                coasterTotalLength = coasterTrackPath.getTotalLength();
+            }
+
+            const hTotal = state.sim3.initialHeightMeters;
+            const m = state.sim3.mass;
+            const totalEnergy = m * GRAVITY_EARTH * hTotal;
+
+            const d = Math.max(0, Math.min(coasterTotalLength, state.sim3.trackDist));
+            const pt = coasterTrackPath.getPointAtLength(d);
+
+            const heightFraction = Math.max(0, (SIM3_Y_GROUND - pt.y) / SIM3_PIXEL_DROP);
+            const currentH = Math.min(hTotal, heightFraction * hTotal);
+
+            const Ep = m * GRAVITY_EARTH * currentH;
+            const Ek = Math.max(0, totalEnergy - Ep);
+            const speed = Math.sqrt((2 * Ek) / m);
+
+            const epPercent = totalEnergy > 0 ? Math.min(100, Math.max(0, Math.round((Ep / totalEnergy) * 100))) : 0;
+            const ekPercent = 100 - epPercent;
+
+            const dNext = Math.min(coasterTotalLength, d + 2);
+            const dPrev = Math.max(0, d - 2);
+            const ptNext = coasterTrackPath.getPointAtLength(dNext);
+            const ptPrev = coasterTrackPath.getPointAtLength(dPrev);
+            const angleRad = Math.atan2(ptNext.y - ptPrev.y, ptNext.x - ptPrev.x);
+            const angleDeg = angleRad * (180 / Math.PI);
+
+            return { hTotal, currentH, totalEnergy, Ep, Ek, speed, epPercent, ekPercent, pt, angleDeg };
+        }
+
         function updateUI() {
             if (state.activeSim === 1) {
-                const s = state.sim1;
-                const hCur = Math.max(0, Math.min(s.hTotal, s.currentY));
-                const eTotal = s.mass * G * s.hTotal;
-                const ep = s.mass * G * hCur;
-                const ek = Math.max(0, eTotal - ep);
-                const epPct = Math.round((ep / eTotal) * 100);
-                const ekPct = 100 - epPct;
+                const p = computeSim1();
+                const fallProgress = (p.hTotal - p.hCurrent) / p.hTotal;
+                const currentSvgY = SIM1_Y_TOP + fallProgress * SIM1_PIXEL_HEIGHT;
 
-                const svgY = 125 + ((s.hTotal - hCur) / s.hTotal) * 567;
-                coconutEntity.setAttribute('transform', `translate(228, ${svgY})`);
+                coconutEntity.setAttribute('transform', `translate(140, ${currentSvgY})`);
+                coconutHLine.setAttribute('y1', currentSvgY);
+                coconutHLine.setAttribute('y2', currentSvgY);
 
-                dispEp.textContent = `${ep.toFixed(1)} J (${epPct}%)`;
-                barEp.style.width = `${epPct}%`;
-                dispEk.textContent = `${ek.toFixed(1)} J (${ekPct}%)`;
-                barEk.style.width = `${ekPct}%`;
-                dispTotal.textContent = `${eTotal.toFixed(1)} J`;
+                valEpJoules.textContent = `${p.Ep.toFixed(1)} J`;
+                valEpPercent.textContent = `(${p.epPercent}%)`;
+                barEp.style.width = `${p.epPercent}%`;
 
-                labelMetric1.textContent = "Height (h)";
-                valMetric1.innerHTML = `${hCur.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
-                valVelocity.innerHTML = `${Math.abs(s.v).toFixed(2)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
+                valEkJoules.textContent = `${p.Ek.toFixed(1)} J`;
+                valEkPercent.textContent = `(${p.ekPercent}%)`;
+                barEk.style.width = `${p.ekPercent}%`;
 
-                if (valMomentum) {
-                    const momentum = s.mass * Math.abs(s.v);
-                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">kg·m/s</span>`;
+                valTotalJoules.textContent = `${p.totalEnergy.toFixed(1)} J`;
+
+                dispMetric1Label.textContent = "Height (y)";
+                dispMetric1Val.innerHTML = `${p.hCurrent.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
+
+                if (Math.abs(p.hCurrent - p.hTotal) < 0.1) {
+                    dispMetric1Badge.textContent = "Top (h)";
+                    dispMetric1Badge.className = "text-[11px] text-amber-700 font-bold bg-amber-50 py-0.5 px-1 rounded border border-amber-200 inline-block mx-auto";
+                } else if (Math.abs(p.hCurrent - p.hTotal / 2) < 0.3) {
+                    dispMetric1Badge.textContent = "½ of h";
+                    dispMetric1Badge.className = "text-[11px] text-blue-700 font-bold bg-blue-50 py-0.5 px-1 rounded border border-blue-200 inline-block mx-auto";
+                } else if (p.hCurrent <= 0.05) {
+                    dispMetric1Badge.textContent = "Ground (h=0)";
+                    dispMetric1Badge.className = "text-[11px] text-indigo-700 font-bold bg-indigo-50 py-0.5 px-1 rounded border border-indigo-200 inline-block mx-auto";
+                } else {
+                    dispMetric1Badge.textContent = "Falling Free";
+                    dispMetric1Badge.className = "text-[11px] text-slate-600 font-bold bg-slate-50 py-0.5 px-1 rounded border border-slate-200 inline-block mx-auto";
                 }
 
-                if (hCur >= s.hTotal - 0.1) badgeMetric1.textContent = "Top (h)";
-                else if (Math.abs(hCur - s.hTotal / 2) < 0.3) badgeMetric1.textContent = "½ of h";
-                else if (hCur <= 0.05) badgeMetric1.textContent = "Ground";
-                else badgeMetric1.textContent = "Falling";
+                dispVelocity.innerHTML = `${p.speed.toFixed(2)} <span class="text-xs font-normal text-slate-500">m/s</span>`;
+                dispVelocityFormula.textContent = "v = √(2·g·Δh)";
 
-                timeDisplay.textContent = `${s.time.toFixed(2)} s`;
+                dispMetric3Label.textContent = "Gravity (g)";
+                dispMetric3Val.innerHTML = `9.81 <span class="text-xs font-semibold text-slate-500">m/s²</span>`;
+                dispMetric3Badge.textContent = "Earth (Std)";
+
+                timeElapsed.textContent = `${state.sim1.timeElapsed.toFixed(2)} s`;
 
             } else if (state.activeSim === 2) {
-                const s = state.sim2;
-                const L = 2.0;
-                const hMax = L * (1 - Math.cos(s.thetaMax));
-                const hCur = Math.max(0, L * (1 - Math.cos(s.theta)));
-                const eTotal = s.mass * G * hMax;
-                const ep = s.mass * G * hCur;
-                const ek = Math.max(0, eTotal - ep);
-                const speed = Math.sqrt((2 * ek) / s.mass);
-                const epPct = eTotal > 0 ? Math.round((ep / eTotal) * 100) : 0;
-                const ekPct = 100 - epPct;
+                const p = computeSim2();
 
-                const bobX = 310 + 440 * Math.sin(s.theta);
-                const bobY = 85 + 440 * Math.cos(s.theta);
+                const bobX = SIM2_PIVOT_X + SIM2_STRING_PIXELS * Math.sin(state.sim2.theta);
+                const bobY = SIM2_PIVOT_Y + SIM2_STRING_PIXELS * Math.cos(state.sim2.theta);
+
                 activeString.setAttribute('x2', bobX);
                 activeString.setAttribute('y2', bobY);
                 activeBob.setAttribute('transform', `translate(${bobX}, ${bobY})`);
 
-                const xC = 310 - 440 * Math.sin(s.thetaMax);
-                const yC = 85 + 440 * Math.cos(s.thetaMax);
-                const xB = 310 + 440 * Math.sin(s.thetaMax);
-                const yB = yC;
-                trajectoryArc.setAttribute('d', `M ${xC} ${yC} A 440 440 0 0 0 ${xB} ${yB}`);
+                const thetaMaxRad = state.sim2.thetaMaxDeg * (Math.PI / 180);
+                const xC = SIM2_PIVOT_X - SIM2_STRING_PIXELS * Math.sin(thetaMaxRad);
+                const yC = SIM2_PIVOT_Y + SIM2_STRING_PIXELS * Math.cos(thetaMaxRad);
+                const xB = SIM2_PIVOT_X + SIM2_STRING_PIXELS * Math.sin(thetaMaxRad);
+                const yB = SIM2_PIVOT_Y + SIM2_STRING_PIXELS * Math.cos(thetaMaxRad);
+                const yA = SIM2_PIVOT_Y + SIM2_STRING_PIXELS;
 
-                dispEp.textContent = `${ep.toFixed(1)} J (${epPct}%)`;
-                barEp.style.width = `${epPct}%`;
-                dispEk.textContent = `${ek.toFixed(1)} J (${ekPct}%)`;
-                barEk.style.width = `${ekPct}%`;
-                dispTotal.textContent = `${eTotal.toFixed(1)} J`;
+                stringC.setAttribute('x2', xC);
+                stringC.setAttribute('y2', yC);
+                bobC.setAttribute('cx', xC);
+                bobC.setAttribute('cy', yC);
 
-                const deg = s.theta * 180 / Math.PI;
-                labelMetric1.textContent = "Angle (θ)";
-                valMetric1.innerHTML = `${Math.abs(deg).toFixed(1)}<span class="text-xs font-semibold text-slate-500">°</span>`;
-                valVelocity.innerHTML = `${speed.toFixed(2)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
+                stringB.setAttribute('x2', xB);
+                stringB.setAttribute('y2', yB);
+                bobB.setAttribute('cx', xB);
+                bobB.setAttribute('cy', yB);
 
-                if (valMomentum) {
-                    const momentum = s.mass * speed;
-                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">kg·m/s</span>`;
+                trajectoryArc.setAttribute('d', `M ${xC} ${yC} A ${SIM2_STRING_PIXELS} ${SIM2_STRING_PIXELS} 0 0 0 ${xB} ${yB}`);
+
+                const arrowMidLeftX = SIM2_PIVOT_X - SIM2_STRING_PIXELS * Math.sin(thetaMaxRad * 0.45);
+                const arrowMidLeftY = SIM2_PIVOT_Y + SIM2_STRING_PIXELS * Math.cos(thetaMaxRad * 0.45);
+                arrowLeft.setAttribute('points', `${arrowMidLeftX - 6},${arrowMidLeftY - 3} ${arrowMidLeftX + 6},${arrowMidLeftY - 6} ${arrowMidLeftX + 1},${arrowMidLeftY + 6}`);
+
+                const arrowMidRightX = SIM2_PIVOT_X + SIM2_STRING_PIXELS * Math.sin(thetaMaxRad * 0.45);
+                const arrowMidRightY = SIM2_PIVOT_Y + SIM2_STRING_PIXELS * Math.cos(thetaMaxRad * 0.45);
+                arrowRight.setAttribute('points', `${arrowMidRightX + 6},${arrowMidRightY - 3} ${arrowMidRightX - 6},${arrowMidRightY - 6} ${arrowMidRightX - 1},${arrowMidRightY + 6}`);
+
+                // Update height dimension arrow on right side at x = 535
+                if (refLineExtreme && refHeightArrow && refArrowTop && refArrowBtm && refHeightBg && refHeightVal) {
+                    const arrowX = 535;
+                    refLineExtreme.setAttribute('x1', xB);
+                    refLineExtreme.setAttribute('y1', yB);
+                    refLineExtreme.setAttribute('x2', arrowX + 25);
+                    refLineExtreme.setAttribute('y2', yB);
+
+                    refHeightArrow.setAttribute('x1', arrowX);
+                    refHeightArrow.setAttribute('y1', yB + 4);
+                    refHeightArrow.setAttribute('x2', arrowX);
+                    refHeightArrow.setAttribute('y2', yA - 4);
+
+                    refArrowTop.setAttribute('points', `${arrowX},${yB} ${arrowX - 4},${yB + 9} ${arrowX + 4},${yB + 9}`);
+                    refArrowBtm.setAttribute('points', `${arrowX},${yA} ${arrowX - 4},${yA - 9} ${arrowX + 4},${yA - 9}`);
+
+                    const midY = (yB + yA) / 2;
+                    refHeightBg.setAttribute('x', arrowX - 17);
+                    refHeightBg.setAttribute('y', midY - 11);
+                    refHeightText.setAttribute('x', arrowX);
+                    refHeightText.setAttribute('y', midY + 5);
+
+                    refHeightVal.setAttribute('x', arrowX);
+                    refHeightVal.setAttribute('y', yA + 20);
+                    refHeightVal.textContent = `h = ${p.hMax.toFixed(2)} m`;
                 }
 
-                if (Math.abs(s.theta) < 0.04) badgeMetric1.textContent = "Point A";
-                else if (s.theta <= -s.thetaMax + 0.04) badgeMetric1.textContent = "Point C";
-                else if (s.theta >= s.thetaMax - 0.04) badgeMetric1.textContent = "Point B";
-                else badgeMetric1.textContent = "Swinging";
+                valEpJoules.textContent = `${p.Ep.toFixed(1)} J`;
+                valEpPercent.textContent = `(${p.epPercent}%)`;
+                barEp.style.width = `${p.epPercent}%`;
 
-                timeDisplay.textContent = `${s.time.toFixed(2)} s`;
+                valEkJoules.textContent = `${p.Ek.toFixed(1)} J`;
+                valEkPercent.textContent = `(${p.ekPercent}%)`;
+                barEk.style.width = `${p.ekPercent}%`;
+
+                valTotalJoules.textContent = `${p.totalEnergy.toFixed(1)} J`;
+
+                const currentAngleDeg = (state.sim2.theta * 180 / Math.PI);
+                dispMetric1Label.textContent = "Angle (θ)";
+                dispMetric1Val.innerHTML = `${Math.abs(currentAngleDeg).toFixed(1)}<span class="text-xs font-semibold text-slate-500">°</span>`;
+
+                if (Math.abs(state.sim2.theta) < 0.04) {
+                    dispMetric1Badge.textContent = "Point A (Center)";
+                    dispMetric1Badge.className = "text-[11px] text-blue-700 font-bold bg-blue-50 py-0.5 px-1 rounded border border-blue-200 inline-block mx-auto";
+                } else if (state.sim2.theta <= -thetaMaxRad + 0.04) {
+                    dispMetric1Badge.textContent = "Point C (Extreme)";
+                    dispMetric1Badge.className = "text-[11px] text-amber-700 font-bold bg-amber-50 py-0.5 px-1 rounded border border-amber-200 inline-block mx-auto";
+                } else if (state.sim2.theta >= thetaMaxRad - 0.04) {
+                    dispMetric1Badge.textContent = "Point B (Extreme)";
+                    dispMetric1Badge.className = "text-[11px] text-amber-700 font-bold bg-amber-50 py-0.5 px-1 rounded border border-amber-200 inline-block mx-auto";
+                } else {
+                    dispMetric1Badge.textContent = state.sim2.theta < 0 ? "Approaching A" : "Swinging Up";
+                    dispMetric1Badge.className = "text-[11px] text-slate-600 font-bold bg-slate-50 py-0.5 px-1 rounded border border-slate-200 inline-block mx-auto";
+                }
+
+                dispVelocity.innerHTML = `${p.speed.toFixed(2)} <span class="text-xs font-normal text-slate-500">m/s</span>`;
+                dispVelocityFormula.textContent = "v = √(2·Ek/m)";
+
+                dispMetric3Label.textContent = "Height (h)";
+                dispMetric3Val.innerHTML = `${p.currentH.toFixed(2)} <span class="text-xs font-semibold text-slate-500">m</span>`;
+                dispMetric3Badge.textContent = "Above datum A";
+
+                timeElapsed.textContent = `${state.sim2.timeElapsed.toFixed(2)} s`;
 
             } else if (state.activeSim === 3) {
-                if (!coasterLen && coasterTrackPath.getTotalLength) coasterLen = coasterTrackPath.getTotalLength();
-                const s = state.sim3;
-                const d = Math.max(0, Math.min(coasterLen, s.trackDist));
-                const pt = coasterTrackPath.getPointAtLength(d);
+                const p = computeSim3();
 
-                const hFract = Math.max(0, (540 - pt.y) / 400);
-                const hCur = Math.min(s.hTotal, hFract * s.hTotal);
-                const eTotal = s.mass * G * s.hTotal;
-                const ep = s.mass * G * hCur;
-                const ek = Math.max(0, eTotal - ep);
-                const speed = Math.sqrt((2 * ek) / s.mass);
-                const epPct = Math.round((ep / eTotal) * 100);
-                const ekPct = 100 - epPct;
+                activeCoasterCart.setAttribute('transform', `translate(${p.pt.x}, ${p.pt.y}) rotate(${p.angleDeg})`);
 
-                const pNext = coasterTrackPath.getPointAtLength(Math.min(coasterLen, d + 2));
-                const pPrev = coasterTrackPath.getPointAtLength(Math.max(0, d - 2));
-                const angle = Math.atan2(pNext.y - pPrev.y, pNext.x - pPrev.x) * 180 / Math.PI;
-                activeCoasterCart.setAttribute('transform', `translate(${pt.x}, ${pt.y}) rotate(${angle})`);
+                valEpJoules.textContent = `${p.Ep >= 1000 ? (p.Ep / 1000).toFixed(1) + ' kJ' : p.Ep.toFixed(0) + ' J'}`;
+                valEpPercent.textContent = `(${p.epPercent}%)`;
+                barEp.style.width = `${p.epPercent}%`;
 
-                dispEp.textContent = `${ep >= 1000 ? (ep/1000).toFixed(1) + ' kJ' : ep.toFixed(0) + ' J'} (${epPct}%)`;
-                barEp.style.width = `${epPct}%`;
-                dispEk.textContent = `${ek >= 1000 ? (ek/1000).toFixed(1) + ' kJ' : ek.toFixed(0) + ' J'} (${ekPct}%)`;
-                barEk.style.width = `${ekPct}%`;
-                dispTotal.textContent = `${(eTotal/1000).toFixed(1)} kJ`;
+                valEkJoules.textContent = `${p.Ek >= 1000 ? (p.Ek / 1000).toFixed(1) + ' kJ' : p.Ek.toFixed(0) + ' J'}`;
+                valEkPercent.textContent = `(${p.ekPercent}%)`;
+                barEk.style.width = `${p.ekPercent}%`;
 
-                labelMetric1.textContent = "Height (h)";
-                valMetric1.innerHTML = `${hCur.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
-                valVelocity.innerHTML = `${speed.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m/s</span>`;
+                valTotalJoules.textContent = `${p.totalEnergy >= 1000 ? (p.totalEnergy / 1000).toFixed(1) + ' kJ' : p.totalEnergy.toFixed(0) + ' J'}`;
 
-                if (valMomentum) {
-                    const momentum = (s.mass * speed) / 1000;
-                    valMomentum.innerHTML = `${momentum.toFixed(1)} <span class="text-xs font-semibold text-slate-500">k·N·s</span>`;
+                dispMetric1Label.textContent = "Track Height (h)";
+                dispMetric1Val.innerHTML = `${p.currentH.toFixed(1)} <span class="text-xs font-semibold text-slate-500">m</span>`;
+
+                if (p.pt.x >= 785) {
+                    dispMetric1Badge.textContent = "Flat Ground Slide";
+                    dispMetric1Badge.className = "text-[11px] text-teal-800 font-bold bg-teal-50 py-0.5 px-1 rounded border border-teal-200 inline-block mx-auto";
+                } else if (p.currentH >= p.hTotal - 0.5) {
+                    dispMetric1Badge.textContent = "Hill 1 Peak (Ep max)";
+                    dispMetric1Badge.className = "text-[11px] text-amber-700 font-bold bg-amber-50 py-0.5 px-1 rounded border border-amber-200 inline-block mx-auto";
+                } else if (p.currentH <= 0.5) {
+                    dispMetric1Badge.textContent = "Valley Floor (Ek max)";
+                    dispMetric1Badge.className = "text-[11px] text-blue-700 font-bold bg-blue-50 py-0.5 px-1 rounded border border-blue-200 inline-block mx-auto";
+                } else {
+                    dispMetric1Badge.textContent = "Transfer: Ep ↔ Ek";
+                    dispMetric1Badge.className = "text-[11px] text-slate-600 font-bold bg-slate-50 py-0.5 px-1 rounded border border-slate-200 inline-block mx-auto";
                 }
 
-                if (pt.x >= 790) badgeMetric1.textContent = "Flat Slide";
-                else if (hCur >= s.hTotal - 0.5) badgeMetric1.textContent = "Peak";
-                else if (hCur <= 0.5) badgeMetric1.textContent = "Valley";
-                else badgeMetric1.textContent = "Coasting";
+                dispVelocity.innerHTML = `${p.speed.toFixed(1)} <span class="text-xs font-normal text-slate-500">m/s</span>`;
+                dispVelocityFormula.textContent = "v = √(2·Ek/m)";
 
-                timeDisplay.textContent = `${s.time.toFixed(2)} s`;
+                dispMetric3Label.textContent = "Gravity (g)";
+                dispMetric3Val.innerHTML = `9.81 <span class="text-xs font-semibold text-slate-500">m/s²</span>`;
+                dispMetric3Badge.textContent = "Earth (Std)";
+
+                timeElapsed.textContent = `${state.sim3.timeElapsed.toFixed(2)} s`;
             }
         }
 
-        // Simulation Animation Loop
-        function loop(timestamp) {
-            if (!state.lastTime) state.lastTime = timestamp;
-            const dtReal = Math.min(0.04, (timestamp - state.lastTime) / 1000);
-            const dt = dtReal * (state.timeScale || 1.0);
-            state.lastTime = timestamp;
+        function animationStep(timestamp) {
+            if (!state.lastTimestamp) state.lastTimestamp = timestamp;
+            const deltaMs = timestamp - state.lastTimestamp;
+            state.lastTimestamp = timestamp;
 
             if (state.isRunning && !state.isDragging) {
-                if (state.activeSim === 1) {
-                    const s = state.sim1;
-                    s.time += dt;
-                    s.v += G * dt;
-                    s.currentY -= s.v * dt;
-                    if (s.currentY <= 0) {
-                        s.currentY = 0;
-                        s.v = Math.sqrt(2 * G * s.hTotal);
-                        state.isRunning = false;
-                        btnPlayText.textContent = "Restart";
-                        statusText.textContent = "Ground";
-                    }
-                } else if (state.activeSim === 2) {
-                    const s = state.sim2;
-                    s.time += dt;
-                    const alpha = -(G / 2.0) * Math.sin(s.theta);
-                    s.omega += alpha * dt;
-                    s.theta += s.omega * dt;
-                    if (Math.abs(s.theta) > s.thetaMax) {
-                        s.theta = Math.sign(s.theta) * s.thetaMax;
-                        s.omega = -s.omega * 0.999;
-                    }
-                } else if (state.activeSim === 3) {
-                    const s = state.sim3;
-                    s.time += dt;
-                    const hFract = Math.max(0, (540 - coasterTrackPath.getPointAtLength(s.trackDist).y) / 400);
-                    const ek = Math.max(0, s.mass * G * s.hTotal * (1 - hFract));
-                    const spd = Math.max(2.0, Math.sqrt((2 * ek) / s.mass));
-                    s.trackDist += spd * 7.5 * dt;
+                const dt = Math.min(0.04, (deltaMs / 1000)) * state.speedMultiplier;
 
-                    if (s.trackDist >= coasterLen - 12) {
-                        s.trackDist = coasterLen - 12;
+                if (state.activeSim === 1) {
+                    state.sim1.timeElapsed += dt;
+                    state.sim1.velocity += GRAVITY_EARTH * dt;
+                    state.sim1.currentYPosMeters -= state.sim1.velocity * dt;
+
+                    if (state.sim1.currentYPosMeters <= 0) {
+                        state.sim1.currentYPosMeters = 0;
+                        state.sim1.velocity = Math.sqrt(2 * GRAVITY_EARTH * state.sim1.totalHeightMeters);
                         state.isRunning = false;
-                        btnPlayText.textContent = "Restart";
-                        statusText.textContent = "Finished";
+
+                        simStateLabel.textContent = "Reached Ground (h=0)";
+                        simStateLabel.className = "text-indigo-700 uppercase font-extrabold tracking-wide";
+                        btnPlayText.textContent = "Restart Fall";
+                        playIcon.innerHTML = '<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
                     }
+                    updateUI();
+
+                } else if (state.activeSim === 2) {
+                    state.sim2.timeElapsed += dt;
+                    const subSteps = 8;
+                    const subDt = dt / subSteps;
+                    const alphaConst = GRAVITY_EARTH / SIM2_PHYSICAL_L;
+
+                    for (let i = 0; i < subSteps; i++) {
+                        const alpha = -alphaConst * Math.sin(state.sim2.theta);
+                        state.sim2.omega += alpha * subDt;
+                        state.sim2.theta += state.sim2.omega * subDt;
+                    }
+
+                    const thetaMaxRad = state.sim2.thetaMaxDeg * (Math.PI / 180);
+                    if (Math.abs(state.sim2.theta) > thetaMaxRad) {
+                        state.sim2.theta = Math.sign(state.sim2.theta) * thetaMaxRad;
+                        state.sim2.omega = -state.sim2.omega * 0.999;
+                    }
+                    updateUI();
+
+                } else if (state.activeSim === 3) {
+                    state.sim3.timeElapsed += dt;
+                    const p = computeSim3();
+                    const physicalSpeed = Math.max(1.5, p.speed);
+                    const pixelSpeed = physicalSpeed * (SIM3_PIXEL_DROP / state.sim3.initialHeightMeters) * 0.65;
+
+                    state.sim3.trackDist += pixelSpeed * dt;
+
+                    if (state.sim3.trackDist >= coasterTotalLength - 10) {
+                        state.sim3.trackDist = coasterTotalLength - 10;
+                        state.isRunning = false;
+
+                        simStateLabel.textContent = "Slid to Stop on Flat Ground";
+                        simStateLabel.className = "text-teal-800 uppercase font-extrabold tracking-wide";
+                        btnPlayText.textContent = "Restart Ride";
+                        playIcon.innerHTML = '<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
+                    }
+                    updateUI();
                 }
-                updateUI();
             }
 
             if (state.isRunning) {
-                state.animId = requestAnimationFrame(loop);
+                state.animFrameId = requestAnimationFrame(animationStep);
             }
         }
 
         function toggleSimulation() {
-            if (state.activeSim === 1 && state.sim1.currentY <= 0) jumpSim1('top');
-            if (state.activeSim === 3 && state.sim3.trackDist >= coasterLen - 15) jumpSim3('peak');
+            if (state.activeSim === 1 && state.sim1.currentYPosMeters <= 0) {
+                jumpSim1('top');
+            } else if (state.activeSim === 3 && state.sim3.trackDist >= coasterTotalLength - 12) {
+                jumpSim3('peak');
+            }
 
             state.isRunning = !state.isRunning;
+
             if (state.isRunning) {
+                dragHint.style.opacity = '0';
+                simStateLabel.textContent = state.activeSim === 1 ? "Falling..." : (state.activeSim === 2 ? "Oscillating" : "Coasting on Track");
+                simStateLabel.className = "text-teal-700 uppercase font-extrabold tracking-wide";
                 btnPlayText.textContent = "Pause";
-                playIcon.textContent = "❚❚";
-                statusText.textContent = "Running";
-                state.lastTime = performance.now();
-                state.animId = requestAnimationFrame(loop);
+                playIcon.innerHTML = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>';
+                state.lastTimestamp = performance.now();
+                state.animFrameId = requestAnimationFrame(animationStep);
             } else {
+                simStateLabel.textContent = "Paused";
+                simStateLabel.className = "text-amber-700 uppercase font-extrabold tracking-wide";
                 btnPlayText.textContent = "Resume";
-                playIcon.textContent = "▶";
-                statusText.textContent = "Paused";
-                if (state.animId) cancelAnimationFrame(state.animId);
+                playIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
+                if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
             }
         }
 
         function resetSimulation() {
-            if (state.animId) cancelAnimationFrame(state.animId);
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
             state.isRunning = false;
-            btnPlayText.textContent = "Release";
-            playIcon.textContent = "▶";
-            statusText.textContent = "Ready";
+            state.lastTimestamp = null;
 
             if (state.activeSim === 1) {
-                state.sim1.currentY = state.sim1.hTotal;
-                state.sim1.v = 0;
-                state.sim1.time = 0;
+                state.sim1.currentYPosMeters = state.sim1.totalHeightMeters;
+                state.sim1.velocity = 0;
+                state.sim1.timeElapsed = 0;
+                simStateLabel.textContent = "Ready at Top";
+                btnPlayText.textContent = "Release Coconut";
             } else if (state.activeSim === 2) {
-                state.sim2.theta = -state.sim2.thetaMax;
+                const thetaMaxRad = state.sim2.thetaMaxDeg * (Math.PI / 180);
+                state.sim2.theta = -thetaMaxRad;
                 state.sim2.omega = 0;
-                state.sim2.time = 0;
+                state.sim2.timeElapsed = 0;
+                simStateLabel.textContent = "Ready at Point C";
+                btnPlayText.textContent = "Release Pendulum";
             } else if (state.activeSim === 3) {
-                state.sim3.trackDist = findTrackX(280);
-                state.sim3.time = 0;
+                state.sim3.trackDist = findTrackDistAtX(280);
+                state.sim3.velocity = 0;
+                state.sim3.timeElapsed = 0;
+                simStateLabel.textContent = "Ready at Hill 1 Peak";
+                btnPlayText.textContent = "Release Cart";
             }
+
+            simStateLabel.className = "text-teal-700 uppercase font-extrabold tracking-wide";
+            playIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
+            dragHint.style.opacity = '0.9';
             updateUI();
         }
 
-        // Jump positions
+        function setSpeed(spd) {
+            state.speedMultiplier = spd;
+            if (spd === 1.0) {
+                document.getElementById('spd1').className = 'px-2 py-0.5 rounded bg-white text-teal-700 shadow-xs font-bold transition';
+                document.getElementById('spd025').className = 'px-2 py-0.5 rounded text-slate-600 hover:bg-white transition flex items-center gap-1';
+            } else {
+                document.getElementById('spd1').className = 'px-2 py-0.5 rounded text-slate-600 hover:bg-white transition';
+                document.getElementById('spd025').className = 'px-2 py-0.5 rounded bg-white text-teal-700 shadow-xs font-bold transition flex items-center gap-1';
+            }
+        }
+
         function jumpSim1(pos) {
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
             state.isRunning = false;
-            state.sim1.time = 0;
-            if (pos === 'top') { state.sim1.currentY = state.sim1.hTotal; state.sim1.v = 0; }
-            if (pos === 'mid') { state.sim1.currentY = state.sim1.hTotal / 2; state.sim1.v = Math.sqrt(G * state.sim1.hTotal); }
-            if (pos === 'ground') { state.sim1.currentY = 0; state.sim1.v = Math.sqrt(2 * G * state.sim1.hTotal); }
-            updateUI();
-        }
+            state.sim1.timeElapsed = 0;
 
-        function jumpSim2(pos) {
-            state.isRunning = false;
-            state.sim2.time = 0;
-            if (pos === 'C') { state.sim2.theta = -state.sim2.thetaMax; state.sim2.omega = 0; }
-            if (pos === 'B') { state.sim2.theta = state.sim2.thetaMax; state.sim2.omega = 0; }
-            if (pos === 'A') { state.sim2.theta = 0; state.sim2.omega = Math.sqrt(2 * G * 2.0 * (1 - Math.cos(state.sim2.thetaMax))) / 2.0; }
-            updateUI();
-        }
-
-        function findTrackX(targetX) {
-            if (!coasterLen && coasterTrackPath.getTotalLength) coasterLen = coasterTrackPath.getTotalLength();
-            let best = 0, minDiff = 9999;
-            for (let i = 0; i <= 100; i++) {
-                const d = (i / 100) * coasterLen;
-                const diff = Math.abs(coasterTrackPath.getPointAtLength(d).x - targetX);
-                if (diff < minDiff) { minDiff = diff; best = d; }
+            if (pos === 'top') {
+                state.sim1.currentYPosMeters = state.sim1.totalHeightMeters;
+                state.sim1.velocity = 0;
+                simStateLabel.textContent = "At Top: Ek=0, 100% Ep";
+            } else if (pos === 'mid') {
+                state.sim1.currentYPosMeters = state.sim1.totalHeightMeters / 2;
+                state.sim1.velocity = Math.sqrt(GRAVITY_EARTH * state.sim1.totalHeightMeters);
+                simStateLabel.textContent = "At ½ of h: 50% Ep, 50% Ek";
+            } else if (pos === 'ground') {
+                state.sim1.currentYPosMeters = 0;
+                state.sim1.velocity = Math.sqrt(2 * GRAVITY_EARTH * state.sim1.totalHeightMeters);
+                simStateLabel.textContent = "At Ground: 100% Ek, Ep=0";
             }
-            return best;
-        }
 
-        function jumpSim3(pos) {
-            state.isRunning = false;
-            state.sim3.time = 0;
-            if (pos === 'peak') state.sim3.trackDist = findTrackX(280);
-            if (pos === 'valley') state.sim3.trackDist = findTrackX(500);
-            if (pos === 'flat') state.sim3.trackDist = findTrackX(830);
+            btnPlayText.textContent = pos === 'ground' ? "Restart Fall" : "Release";
+            playIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
             updateUI();
         }
 
-        // Parameter Sliders Handlers
-        function onParam1(val) {
+        function jumpSim2(pt) {
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
+            state.isRunning = false;
+            state.sim2.timeElapsed = 0;
+            const thetaMaxRad = state.sim2.thetaMaxDeg * (Math.PI / 180);
+
+            if (pt === 'C') {
+                state.sim2.theta = -thetaMaxRad;
+                state.sim2.omega = 0;
+                simStateLabel.textContent = "Point C: Ep=max, Ek=0";
+            } else if (pt === 'B') {
+                state.sim2.theta = thetaMaxRad;
+                state.sim2.omega = 0;
+                simStateLabel.textContent = "Point B: Ep=max, Ek=0";
+            } else if (pt === 'A') {
+                state.sim2.theta = 0;
+                const hMax = SIM2_PHYSICAL_L * (1 - Math.cos(thetaMaxRad));
+                const vMax = Math.sqrt(2 * GRAVITY_EARTH * hMax);
+                state.sim2.omega = vMax / SIM2_PHYSICAL_L;
+                simStateLabel.textContent = "Point A: Ek=max, Ep=0";
+            }
+
+            btnPlayText.textContent = "Release";
+            playIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
+            updateUI();
+        }
+
+        function findTrackDistAtX(targetX) {
+            if (!coasterTotalLength && coasterTrackPath.getTotalLength) {
+                coasterTotalLength = coasterTrackPath.getTotalLength();
+            }
+            let bestDist = 0;
+            let minDiff = 9999;
+            const steps = 100;
+            for (let i = 0; i <= steps; i++) {
+                const d = (i / steps) * coasterTotalLength;
+                const pt = coasterTrackPath.getPointAtLength(d);
+                const diff = Math.abs(pt.x - targetX);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    bestDist = d;
+                }
+            }
+            return bestDist;
+        }
+
+        function jumpSim3(pt) {
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
+            state.isRunning = false;
+            state.sim3.timeElapsed = 0;
+
+            if (pt === 'peak') {
+                state.sim3.trackDist = findTrackDistAtX(280);
+                simStateLabel.textContent = "Peak: Ep max, Ek = 0";
+            } else if (pt === 'valley') {
+                state.sim3.trackDist = findTrackDistAtX(500);
+                simStateLabel.textContent = "Valley: Ek max, Ep = 0";
+            } else if (pt === 'hill2') {
+                state.sim3.trackDist = findTrackDistAtX(680);
+                simStateLabel.textContent = "Hill 2: Ek decreases, Ep gains";
+            } else if (pt === 'flat') {
+                state.sim3.trackDist = findTrackDistAtX(830);
+                simStateLabel.textContent = "Flat Ground: Slide (h=0, Ep=0)";
+            }
+
+            btnPlayText.textContent = "Release Cart";
+            playIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
+            updateUI();
+        }
+
+        function onParam1Change(val) {
             const num = parseFloat(val);
             if (state.activeSim === 1) {
-                state.sim1.hTotal = num;
-                param1Val.textContent = `${num.toFixed(1)} m`;
-                if (!state.isRunning) state.sim1.currentY = num;
+                state.sim1.totalHeightMeters = num;
+                param1Badge.textContent = `${num.toFixed(1)} m`;
+                if (!state.isRunning) {
+                    state.sim1.currentYPosMeters = num;
+                    state.sim1.velocity = 0;
+                }
             } else if (state.activeSim === 2) {
-                state.sim2.thetaMax = num * Math.PI / 180;
-                param1Val.textContent = `${num}°`;
-                if (!state.isRunning) state.sim2.theta = -state.sim2.thetaMax;
+                state.sim2.thetaMaxDeg = num;
+                param1Badge.textContent = `${num}°`;
+                if (!state.isRunning) {
+                    state.sim2.theta = -num * (Math.PI / 180);
+                    state.sim2.omega = 0;
+                }
             } else if (state.activeSim === 3) {
-                state.sim3.hTotal = num;
-                param1Val.textContent = `${num.toFixed(0)} m`;
+                state.sim3.initialHeightMeters = num;
+                param1Badge.textContent = `${num.toFixed(1)} m`;
             }
             updateUI();
         }
 
-        function onParam2(val) {
+        function onParam2Change(val) {
             const num = parseFloat(val);
             if (state.activeSim === 1) {
                 state.sim1.mass = num;
-                param2Val.textContent = `${num.toFixed(1)} kg`;
+                param2Badge.textContent = `${num.toFixed(1)} kg`;
             } else if (state.activeSim === 2) {
                 state.sim2.mass = num;
-                param2Val.textContent = `${num.toFixed(1)} kg`;
+                param2Badge.textContent = `${num.toFixed(1)} kg`;
             } else if (state.activeSim === 3) {
                 state.sim3.mass = num;
-                param2Val.textContent = `${num.toFixed(0)} kg`;
+                param2Badge.textContent = `${num.toFixed(0)} kg`;
             }
             updateUI();
         }
 
-        // Dragging Logic
-        function getSVGPoint(svg, e) {
+        function getSvgCoord(svg, evt) {
             const pt = svg.createSVGPoint();
-            pt.x = e.touches ? e.touches[0].clientX : e.clientX;
-            pt.y = e.touches ? e.touches[0].clientY : e.clientY;
+            if (evt.touches && evt.touches[0]) {
+                pt.x = evt.touches[0].clientX;
+                pt.y = evt.touches[0].clientY;
+            } else {
+                pt.x = evt.clientX;
+                pt.y = evt.clientY;
+            }
             return pt.matrixTransform(svg.getScreenCTM().inverse());
         }
 
-        function startDrag(e) {
+        function handleDragStart(e) {
             if (state.isRunning) toggleSimulation();
             state.isDragging = true;
-            statusText.textContent = "Dragging";
+            dragHint.style.opacity = '0';
         }
 
-        function moveDrag(e) {
+        function handleDragMove(e) {
             if (!state.isDragging) return;
-            if (e.cancelable) e.preventDefault();
+            e.preventDefault();
 
             if (state.activeSim === 1) {
-                const pt = getSVGPoint(svgSim1, e);
-                const clampedY = Math.max(125, Math.min(692, pt.y));
-                state.sim1.currentY = state.sim1.hTotal * (1 - (clampedY - 125) / 567);
-                state.sim1.v = 0;
+                const pt = getSvgCoord(svgSim1, e);
+                const clampedY = Math.max(SIM1_Y_TOP, Math.min(SIM1_Y_GROUND_STOP, pt.y));
+                const progressDown = (clampedY - SIM1_Y_TOP) / SIM1_PIXEL_HEIGHT;
+                state.sim1.currentYPosMeters = state.sim1.totalHeightMeters * (1 - progressDown);
+                state.sim1.velocity = 0;
+                simStateLabel.textContent = "Dragging Coconut";
+
             } else if (state.activeSim === 2) {
-                const pt = getSVGPoint(svgSim2, e);
-                let ang = Math.atan2(pt.x - 310, Math.max(20, pt.y - 85));
-                ang = Math.max(-state.sim2.thetaMax, Math.min(state.sim2.thetaMax, ang));
-                state.sim2.theta = ang;
+                const pt = getSvgCoord(svgSim2, e);
+                const dx = pt.x - SIM2_PIVOT_X;
+                const dy = Math.max(20, pt.y - SIM2_PIVOT_Y);
+                let rawTheta = Math.atan2(dx, dy);
+
+                const maxRad = 60 * (Math.PI / 180);
+                rawTheta = Math.max(-maxRad, Math.min(maxRad, rawTheta));
+
+                state.sim2.theta = rawTheta;
                 state.sim2.omega = 0;
-            } else if (state.activeSim === 3) {
-                const pt = getSVGPoint(svgSim3, e);
-                let best = 0, minDist = 999999;
-                for (let i = 0; i <= 60; i++) {
-                    const d = (i / 60) * coasterLen;
-                    const p = coasterTrackPath.getPointAtLength(d);
-                    const distSq = (p.x - pt.x)**2 + (p.y - pt.y)**2;
-                    if (distSq < minDist) { minDist = distSq; best = d; }
+
+                const currentDeg = Math.abs(rawTheta * 180 / Math.PI);
+                if (currentDeg > state.sim2.thetaMaxDeg) {
+                    state.sim2.thetaMaxDeg = Math.min(60, Math.round(currentDeg));
+                    inputParam1.value = state.sim2.thetaMaxDeg;
+                    param1Badge.textContent = `${state.sim2.thetaMaxDeg}°`;
                 }
-                state.sim3.trackDist = best;
+                simStateLabel.textContent = "Dragging Pendulum";
+
+            } else if (state.activeSim === 3) {
+                const pt = getSvgCoord(svgSim3, e);
+                let bestDist = 0;
+                let minDist = 999999;
+                const samples = 80;
+                for (let i = 0; i <= samples; i++) {
+                    const testDist = (i / samples) * coasterTotalLength;
+                    const pathPt = coasterTrackPath.getPointAtLength(testDist);
+                    const distSq = (pathPt.x - pt.x) ** 2 + (pathPt.y - pt.y) ** 2;
+                    if (distSq < minDist) {
+                        minDist = distSq;
+                        bestDist = testDist;
+                    }
+                }
+                state.sim3.trackDist = bestDist;
+                simStateLabel.textContent = "Dragging Cart";
             }
+            simStateLabel.className = "text-teal-700 uppercase font-extrabold tracking-wide";
             updateUI();
         }
 
-        function endDrag() {
+        function handleDragEnd() {
             if (state.isDragging) {
                 state.isDragging = false;
-                statusText.textContent = "Ready";
+                simStateLabel.textContent = "Ready at Position";
+                simStateLabel.className = "text-slate-700 uppercase font-extrabold tracking-wide";
             }
         }
 
-        coconutEntity.addEventListener('mousedown', startDrag);
-        coconutEntity.addEventListener('touchstart', startDrag, { passive: false });
-        activeBob.addEventListener('mousedown', startDrag);
-        activeBob.addEventListener('touchstart', startDrag, { passive: false });
-        activeCoasterCart.addEventListener('mousedown', startDrag);
-        activeCoasterCart.addEventListener('touchstart', startDrag, { passive: false });
+        // Add event listeners
+        coconutEntity.addEventListener('mousedown', handleDragStart);
+        coconutEntity.addEventListener('touchstart', handleDragStart, { passive: false });
 
-        window.addEventListener('mousemove', moveDrag);
-        window.addEventListener('touchmove', moveDrag, { passive: false });
-        window.addEventListener('mouseup', endDrag);
-        window.addEventListener('touchend', endDrag);
+        activeBob.addEventListener('mousedown', handleDragStart);
+        activeBob.addEventListener('touchstart', handleDragStart, { passive: false });
 
-        // Security protections: disable right-click context menu and inspect shortcuts safely
-        document.addEventListener('contextmenu', e => e.preventDefault(), { capture: true });
-        document.addEventListener('keydown', e => {
-            if (e.keyCode === 123 || (e.ctrlKey && ['u', 's', 'p'].includes(e.key.toLowerCase())) || 
-               (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))) {
-                e.preventDefault();
-                return false;
-            }
-        }, { capture: true });
-        document.addEventListener('dragstart', e => e.preventDefault());
+        activeCoasterCart.addEventListener('mousedown', handleDragStart);
+        activeCoasterCart.addEventListener('touchstart', handleDragStart, { passive: false });
 
-        // Instant Initialization (Guaranteed to execute immediately in any iframe / browser window)
-        function initApp() {
-            if (window.innerWidth < 1024) {
-                setViewMode('mobile');
-            } else {
-                setViewMode('pc');
-            }
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('touchmove', handleDragMove, { passive: false });
+        window.addEventListener('mouseup', handleDragEnd);
+        window.addEventListener('touchend', handleDragEnd);
+
+        window.onload = function() {
             switchSimulator(1);
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+        };
     </script>
 </body>
 </html>
-```
